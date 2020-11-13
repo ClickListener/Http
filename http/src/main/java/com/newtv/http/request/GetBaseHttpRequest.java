@@ -1,6 +1,7 @@
 package com.newtv.http.request;
 
 import android.content.Context;
+import android.util.Log;
 
 import com.newtv.http.MethodType;
 
@@ -13,8 +14,6 @@ public abstract class GetBaseHttpRequest extends BaseHttpRequest {
     public GetBaseHttpRequest(Context context) {
         super(context);
     }
-
-    // TODO: 2020/11/6 zhangxu  返回请求 Method
 
 
     @Override

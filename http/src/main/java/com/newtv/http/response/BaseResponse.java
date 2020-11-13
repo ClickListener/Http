@@ -2,8 +2,6 @@ package com.newtv.http.response;
 
 import java.io.Serializable;
 
-import okhttp3.Response;
-
 /**
  * @author ZhangXu
  * @date 2020/9/30BaseResponse

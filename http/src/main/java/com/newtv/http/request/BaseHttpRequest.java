@@ -3,15 +3,12 @@ package com.newtv.http.request;
 import android.content.Context;
 
 
-import com.newtv.http.HttpConfig;
+import com.newtv.http.config.HttpConfig;
 import com.newtv.http.MethodType;
 import com.newtv.http.retrofit.RetryWithDelay;
 
 import java.io.Serializable;
-
-import io.reactivex.Observable;
-import okhttp3.ResponseBody;
-import retrofit2.Retrofit;
+import java.util.Map;
 
 /**
  * @author ZhangXu
@@ -48,19 +45,30 @@ public abstract class BaseHttpRequest implements Serializable {
         return mContext;
     }
 
+    /**
+     * 服务器地址
+     * @return 正式服务器或测试服务器
+     */
+    public abstract String getBaseUrl();
 
     /**
-     * 获得Retrofit的Observable
-     * @param retrofit
+     * 请求URL
      * @return
      */
-    public abstract Observable<ResponseBody> getObservable(Retrofit retrofit);
+    public abstract String getSecondUrl();
 
-    public abstract String getBaseUrl();
+    /**
+     * 获得头信息
+     * @return
+     */
+    public abstract Map<String, String> getHeaders();
+
+    public abstract String toJson();
 
     public abstract HttpConfig getHttpConfig();
 
-    public abstract @MethodType.Method
-    int getMethodType();
+    public abstract Map<String, String> getParams();
+
+    public abstract @MethodType.Method int getMethodType();
 
 }

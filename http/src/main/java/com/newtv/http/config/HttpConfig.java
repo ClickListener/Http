@@ -1,6 +1,8 @@
-package com.newtv.http;
+package com.newtv.http.config;
 
 
+
+import com.newtv.http.NewInterceptor;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -55,6 +57,9 @@ public class HttpConfig {
      */
     private List<NewInterceptor> interceptors;
 
+
+    private RetryParam retryParam;
+
     public HttpConfig(Builder builder) {
 
         this.connectTimeout = builder.connectTimeout;
@@ -64,6 +69,7 @@ public class HttpConfig {
         this.writeTimeout = builder.writeTimeout;
         this.writeTimeoutTimeUnit = builder.writeTimeoutTimeUnit;
         this.interceptors = builder.interceptors;
+        this.retryParam = builder.retryParam;
     }
 
 
@@ -93,6 +99,10 @@ public class HttpConfig {
 
     public List<NewInterceptor> getInterceptors() {
         return interceptors;
+    }
+
+    public RetryParam getRetryParam() {
+        return retryParam;
     }
 
 
@@ -137,6 +147,8 @@ public class HttpConfig {
          */
         private List<NewInterceptor> interceptors = new ArrayList<>();
 
+        private RetryParam retryParam;
+
 
         public Builder addInterceptor(NewInterceptor interceptor) {
             if (interceptor != null) {
@@ -165,6 +177,13 @@ public class HttpConfig {
             if (timeout > 0) {
                 this.writeTimeout = timeout;
                 this.writeTimeoutTimeUnit = TimeUnit;
+            }
+            return this;
+        }
+
+        public Builder retryParams(RetryParam retryParam) {
+            if (retryParam != null) {
+                this.retryParam = retryParam;
             }
             return this;
         }

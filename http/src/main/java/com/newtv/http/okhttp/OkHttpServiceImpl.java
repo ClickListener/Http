@@ -2,11 +2,10 @@ package com.newtv.http.okhttp;
 
 import android.os.Handler;
 import android.os.Looper;
-import android.os.Message;
 
-import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.newtv.http.config.HttpConfig;
 import com.newtv.http.request.BaseHttpRequest;
 import com.newtv.http.HttpListener;
 import com.newtv.http.HttpService;
@@ -20,9 +19,15 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import okhttp3.Call;
 import okhttp3.Callback;
+import okhttp3.Headers;
+import okhttp3.HttpUrl;
+import okhttp3.Interceptor;
+import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
+import okhttp3.RequestBody;
 import okhttp3.Response;
+import okhttp3.logging.HttpLoggingInterceptor;
 
 /**
  * @author ZhangXu
@@ -39,9 +44,7 @@ public class OkHttpServiceImpl implements HttpService {
 
     private final Handler handler = new Handler(Looper.getMainLooper());
 
-    private OkHttpServiceImpl() {
-        mClient = new OkHttpClient();
-    }
+    private OkHttpServiceImpl() {}
 
     public static OkHttpServiceImpl getInstance() {
         if (INSTANCE == null) {
@@ -55,6 +58,49 @@ public class OkHttpServiceImpl implements HttpService {
 
     }
 
+
+    public OkHttpClient getOkHttpClient(BaseHttpRequest request) {
+
+        OkHttpClient.Builder builder;
+
+        if (mClient == null) {
+            builder = new OkHttpClient.Builder();
+        } else {
+            builder = mClient.newBuilder();
+        }
+
+        HttpConfig config = request.getHttpConfig();
+        if (config != null) {
+
+            if (config.getConnectTimeout() > 0) {
+                builder.connectTimeout(config.getConnectTimeout(), config.getConnectTimeoutTimeUnit());
+            }
+            if (config.getReadTimeout() > 0) {
+                builder.readTimeout(config.getReadTimeout(), config.getReadTimeoutTimeUnit());
+            }
+
+            if (config.getWriteTimeout() > 0) {
+                builder.readTimeout(config.getWriteTimeout(), config.getWriteTimeoutTimeUnit());
+            }
+
+            for (Interceptor interceptor : config.getInterceptors()) {
+                builder.addInterceptor(interceptor);
+            }
+
+            if (config.getRetryParam() != null) {
+                RetryInterceptor retryInterceptor = new RetryInterceptor(3);
+                builder.addInterceptor(retryInterceptor);
+            }
+        }
+
+        // 默认的一些设置
+        HttpLoggingInterceptor logInterceptor = new HttpLoggingInterceptor();
+        logInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
+        builder.addInterceptor(logInterceptor);
+        mClient = builder.build();
+        return mClient;
+    }
+
     @Override
     public void sendRequest(BaseHttpRequest request, HttpListener listener) {
         Call call;
@@ -63,42 +109,72 @@ public class OkHttpServiceImpl implements HttpService {
 
             if (request.getMethodType() == MethodType.GET) {
 
-                // TODO: 2020/11/6 zhangxu 添加头等信息
+                // 组装参数
+                HttpUrl.Builder builder = HttpUrl.parse(request.getBaseUrl() + request.getSecondUrl())
+                        .newBuilder();
+                Map<String, String> params = request.getParams();
+                if (params != null) {
+                    Set<String> keys = params.keySet();
+                    for (String key : keys) {
+                        builder = builder.addEncodedQueryParameter(key, params.get(key));
+                    }
+                }
                 okHttpRequest = new Request.Builder()
-                        .url("")
+                        .headers(convertHeader(request))
+                        .url(builder.build())
                         .get()
                         .build();
             } else {
-                // TODO: 2020/11/6 zhangxu 添加body 相关信息
+                MediaType type = MediaType.parse("application/json; charset=utf-8");
+                RequestBody body = RequestBody.create(type, request.toJson());
                 okHttpRequest = new Request.Builder()
-                        .url(request.getBaseUrl())
+                        .headers(convertHeader(request))
+                        .post(body)
+                        .url(request.getBaseUrl() + request.getSecondUrl())
                         .build();
             }
 
-            call = mClient.newCall(okHttpRequest);
+            call = getOkHttpClient(request).newCall(okHttpRequest);
             callMap.put(request.getTag(), call);
         } else {
             call = callMap.get(request.getTag());
         }
 
-        call.enqueue(new Callback() {
-            @Override
-            public void onFailure(@Nullable Call call, @Nullable IOException e) {
-                handleErrorCallback(listener, e);
-                callMap.remove(request.getTag());
-            }
-
-            @Override
-            public void onResponse(@Nullable Call call, @Nullable Response response) throws IOException {
-
-                callMap.remove(request.getTag());
-
-                if (response != null && response.body() != null) {
-                    handleSuccessCallback(listener, response.toString());
+        if (call != null) {
+            call.enqueue(new Callback() {
+                @Override
+                public void onFailure(@Nullable Call call, @Nullable IOException e) {
+                    handleErrorCallback(listener, e);
+                    callMap.remove(request.getTag());
                 }
-            }
-        });
 
+                @Override
+                public void onResponse(@Nullable Call call, @Nullable Response response) throws IOException {
+
+                    callMap.remove(request.getTag());
+
+                    if (response != null && response.body() != null) {
+                        handleSuccessCallback(listener, response.body().string());
+                    }
+                }
+            });
+        }
+
+
+    }
+    
+    
+    private Headers convertHeader(BaseHttpRequest request) {
+        Map<String, String> headers = request.getHeaders();
+        if (headers != null) {
+            Headers.Builder builder = new Headers.Builder();
+            Set<String> keySet = headers.keySet();
+            for (String s : keySet) {
+                builder.add(s, headers.get(s));
+            }
+            return builder.build();
+        }
+        return null;
     }
 
     private void handleSuccessCallback(HttpListener listener, String message) {

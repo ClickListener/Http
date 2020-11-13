@@ -16,10 +16,6 @@ public class ApiHelper {
             @Override
             public void onRequestResult(String result) {
 
-                if (callback.getType() == String.class) {
-                    callback.success((T) result);
-                    return;
-                }
                 T r = JSON.parseObject(result, callback.getType());
                 if (r == null) {
                     return;

@@ -1,12 +1,13 @@
 package com.newtv.http.retrofit;
 
 
-
-import com.newtv.http.NewInterceptor;
-import com.newtv.http.request.BaseHttpRequest;
-import com.newtv.http.HttpConfig;
 import com.newtv.http.HttpListener;
 import com.newtv.http.HttpService;
+import com.newtv.http.MethodType;
+import com.newtv.http.config.HttpConfig;
+import com.newtv.http.config.RetryParam;
+import com.newtv.http.request.BaseHttpRequest;
+
 
 import java.io.IOException;
 import java.util.HashMap;
@@ -21,8 +22,9 @@ import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
 import okhttp3.Interceptor;
+import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
-import okhttp3.Response;
+import okhttp3.RequestBody;
 import okhttp3.ResponseBody;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
@@ -84,18 +86,18 @@ public class RetrofitHttpServiceImpl implements HttpService {
 
     }
 
-    private Interceptor convertInterceptor(NewInterceptor newInterceptor) {
-        if (newInterceptor == null) {
-            return null;
-        }
-
-        return new Interceptor() {
-            @Override
-            public Response intercept(Chain chain) throws IOException {
-                return newInterceptor.intercept(chain);
-            }
-        };
-    }
+//    private Interceptor convertInterceptor(NewInterceptor newInterceptor) {
+//        if (newInterceptor == null) {
+//            return null;
+//        }
+//
+//        return new Interceptor() {
+//            @Override
+//            public Response intercept(Chain chain) throws IOException {
+//                return newInterceptor.intercept(chain);
+//            }
+//        };
+//    }
 
     private OkHttpClient getOkHttpClient(BaseHttpRequest request) {
 
@@ -117,8 +119,8 @@ public class RetrofitHttpServiceImpl implements HttpService {
                 builder.readTimeout(config.getWriteTimeout(), config.getWriteTimeoutTimeUnit());
             }
 
-            for (NewInterceptor interceptor : config.getInterceptors()) {
-                builder.addInterceptor(convertInterceptor(interceptor));
+            for (Interceptor interceptor : config.getInterceptors()) {
+                builder.addInterceptor(interceptor);
             }
         }
 
@@ -128,8 +130,12 @@ public class RetrofitHttpServiceImpl implements HttpService {
 
         TrustAllCerts.TrustAllParams params = TrustAllCerts.createSSLSocketFactory();
 
-        return builder.eventListenerFactory(HttpEventListener.Companion.getFACTORY())
-                .sslSocketFactory(params.sSLSocketFactory, params.trustManager)
+//        return builder.eventListenerFactory(HttpEventListener.Companion.getFACTORY())
+//                .sslSocketFactory(params.sSLSocketFactory, params.trustManager)
+//                .hostnameVerifier(new TrustAllCerts.TrustAllHostnameVerifier())
+//                .addInterceptor(logInterceptor)
+//                .build();
+        return builder.sslSocketFactory(params.sSLSocketFactory, params.trustManager)
                 .hostnameVerifier(new TrustAllCerts.TrustAllHostnameVerifier())
                 .addInterceptor(logInterceptor)
                 .build();
@@ -141,8 +147,21 @@ public class RetrofitHttpServiceImpl implements HttpService {
             return;
         }
         Retrofit retrofit = getDefaultRetrofit(request);
-        Observable<ResponseBody> observable = request.getObservable(retrofit);
+        ApiService apiService = retrofit.create(ApiService.class);
+        Observable<ResponseBody> observable;
+        if (request.getMethodType() == MethodType.GET) {
+            observable = apiService.getWithField(request.getHeaders(), request.getSecondUrl(), request.getParams());
+        } else {
+            MediaType type = MediaType.parse("application/json; charset=utf-8");
+            RequestBody body = RequestBody.create(type, request.toJson());
+            observable = apiService.postWithBody(request.getHeaders(), request.getSecondUrl(), body);
+        }
         // 增加重试选项
+        if (request.getHttpConfig() != null && request.getHttpConfig().getRetryParam() != null) {
+            RetryParam retryParam = request.getHttpConfig().getRetryParam();
+            observable = observable.retryWhen(new RetryWithDelay(retryParam.getMaxRetryCount(),
+                    retryParam.getRetryDelay(), retryParam.getTimeUnit()));
+        }
         if (request.getRetryWithDelay() != null) {
             observable = observable.retryWhen(request.getRetryWithDelay());
         }
