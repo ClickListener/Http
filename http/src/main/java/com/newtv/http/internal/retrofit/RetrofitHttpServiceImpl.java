@@ -1,8 +1,10 @@
-package com.newtv.http.retrofit;
+package com.newtv.http.internal.retrofit;
 
 
-import com.newtv.http.HttpListener;
-import com.newtv.http.HttpService;
+
+import com.newtv.http.EventListener;
+import com.newtv.http.internal.HttpListener;
+import com.newtv.http.internal.HttpService;
 import com.newtv.http.MethodType;
 import com.newtv.http.config.HttpConfig;
 import com.newtv.http.config.RetryParam;
@@ -21,7 +23,7 @@ import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.schedulers.Schedulers;
-import okhttp3.Interceptor;
+import okhttp3.Call;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.RequestBody;
@@ -65,13 +67,13 @@ public class RetrofitHttpServiceImpl implements HttpService {
     private RetrofitHttpServiceImpl() {
     }
 
-    private Retrofit getDefaultRetrofit(BaseHttpRequest request) {
+    private Retrofit getDefaultRetrofit(BaseHttpRequest request, EventListener eventListener) {
 
         String baseUrl = request.getBaseUrl();
         Retrofit retrofit = retrofitCache.get(baseUrl);
         if (retrofit == null) {
 
-            OkHttpClient okHttpClient = getOkHttpClient(request);
+            OkHttpClient okHttpClient = getOkHttpClient(request, eventListener);
 
             retrofit = new Retrofit.Builder()
                     .client(okHttpClient)
@@ -86,24 +88,29 @@ public class RetrofitHttpServiceImpl implements HttpService {
 
     }
 
-//    private Interceptor convertInterceptor(NewInterceptor newInterceptor) {
-//        if (newInterceptor == null) {
-//            return null;
-//        }
-//
-//        return new Interceptor() {
-//            @Override
-//            public Response intercept(Chain chain) throws IOException {
-//                return newInterceptor.intercept(chain);
-//            }
-//        };
-//    }
-
-    private OkHttpClient getOkHttpClient(BaseHttpRequest request) {
+    private OkHttpClient getOkHttpClient(BaseHttpRequest request, EventListener eventListener) {
 
         HttpConfig config = request.getHttpConfig();
 
         OkHttpClient.Builder builder = new OkHttpClient.Builder();
+
+
+        builder.eventListener(new okhttp3.EventListener() {
+            @Override
+            public void callStart(Call call) {
+                eventListener.callStart();
+            }
+
+            @Override
+            public void callEnd(Call call) {
+                eventListener.callEnd();
+            }
+
+            @Override
+            public void callFailed(Call call, IOException ioe) {
+                eventListener.callFailed();
+            }
+        });
 
         // 如果配置不为空，则设置
         if (config != null) {
@@ -119,9 +126,9 @@ public class RetrofitHttpServiceImpl implements HttpService {
                 builder.readTimeout(config.getWriteTimeout(), config.getWriteTimeoutTimeUnit());
             }
 
-            for (Interceptor interceptor : config.getInterceptors()) {
-                builder.addInterceptor(interceptor);
-            }
+//            for (Interceptor interceptor : config.getInterceptors()) {
+//                builder.addInterceptor(interceptor);
+//            }
         }
 
         // 默认的一些设置
@@ -142,11 +149,11 @@ public class RetrofitHttpServiceImpl implements HttpService {
     }
 
     @Override
-    public void sendRequest(BaseHttpRequest request, HttpListener listener) {
+    public void sendRequest(BaseHttpRequest request, HttpListener listener, EventListener eventListener) {
         if (request == null) {
             return;
         }
-        Retrofit retrofit = getDefaultRetrofit(request);
+        Retrofit retrofit = getDefaultRetrofit(request, eventListener);
         ApiService apiService = retrofit.create(ApiService.class);
         Observable<ResponseBody> observable;
         if (request.getMethodType() == MethodType.GET) {
@@ -161,9 +168,6 @@ public class RetrofitHttpServiceImpl implements HttpService {
             RetryParam retryParam = request.getHttpConfig().getRetryParam();
             observable = observable.retryWhen(new RetryWithDelay(retryParam.getMaxRetryCount(),
                     retryParam.getRetryDelay(), retryParam.getTimeUnit()));
-        }
-        if (request.getRetryWithDelay() != null) {
-            observable = observable.retryWhen(request.getRetryWithDelay());
         }
         observable.subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -211,7 +215,6 @@ public class RetrofitHttpServiceImpl implements HttpService {
                         releaseRequest(request, disposable);
                     }
                 });
-
     }
 
     private void releaseRequest(BaseHttpRequest request, Disposable disposable) {

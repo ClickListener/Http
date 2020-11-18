@@ -1,7 +1,7 @@
 package com.newtv.http.interceptor;
 
 
-import com.newtv.http.HttpListener;
+import com.newtv.http.internal.HttpListener;
 import com.newtv.http.request.BaseHttpRequest;
 
 import java.io.IOException;
@@ -17,7 +17,7 @@ public interface NewInterceptor {
 
         BaseHttpRequest request();
 
-        Response proceed(BaseHttpRequest request);
+        void proceed(BaseHttpRequest request, HttpListener listener) throws IOException;
     }
 
 }

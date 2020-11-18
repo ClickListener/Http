@@ -5,7 +5,6 @@ import android.content.Context;
 
 import com.newtv.http.config.HttpConfig;
 import com.newtv.http.MethodType;
-import com.newtv.http.retrofit.RetryWithDelay;
 
 import java.io.Serializable;
 import java.util.Map;
@@ -19,19 +18,6 @@ public abstract class BaseHttpRequest implements Serializable {
 
     private Context mContext;
 
-    private RetryWithDelay retryWithDelay;
-
-    /**
-     * 设置重试
-     * @param retryWithDelay
-     */
-    public void setRetryWithDelay(RetryWithDelay retryWithDelay) {
-        this.retryWithDelay = retryWithDelay;
-    }
-
-    public RetryWithDelay getRetryWithDelay() {
-        return retryWithDelay;
-    }
 
     public BaseHttpRequest(Context context) {
         this.mContext = context;

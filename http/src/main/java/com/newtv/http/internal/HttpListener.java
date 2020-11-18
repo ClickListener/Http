@@ -1,4 +1,4 @@
-package com.newtv.http;
+package com.newtv.http.internal;
 
 /**
  * @author ZhangXu

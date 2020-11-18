@@ -1,14 +1,15 @@
-package com.newtv.http.okhttp;
+package com.newtv.http.internal.okhttp;
 
 import android.os.Handler;
 import android.os.Looper;
 
 import androidx.annotation.Nullable;
 
+import com.newtv.http.EventListener;
 import com.newtv.http.config.HttpConfig;
 import com.newtv.http.request.BaseHttpRequest;
-import com.newtv.http.HttpListener;
-import com.newtv.http.HttpService;
+import com.newtv.http.internal.HttpListener;
+import com.newtv.http.internal.HttpService;
 import com.newtv.http.MethodType;
 
 
@@ -21,7 +22,6 @@ import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.Headers;
 import okhttp3.HttpUrl;
-import okhttp3.Interceptor;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -40,11 +40,12 @@ public class OkHttpServiceImpl implements HttpService {
 
     private OkHttpClient mClient;
 
-    private final Map<Object, Call> callMap= new ConcurrentHashMap<>();
+    private final Map<Object, Call> callMap = new ConcurrentHashMap<>();
 
     private final Handler handler = new Handler(Looper.getMainLooper());
 
-    private OkHttpServiceImpl() {}
+    private OkHttpServiceImpl() {
+    }
 
     public static OkHttpServiceImpl getInstance() {
         if (INSTANCE == null) {
@@ -59,7 +60,7 @@ public class OkHttpServiceImpl implements HttpService {
     }
 
 
-    public OkHttpClient getOkHttpClient(BaseHttpRequest request) {
+    public OkHttpClient getOkHttpClient(BaseHttpRequest request, EventListener eventListener) {
 
         OkHttpClient.Builder builder;
 
@@ -68,6 +69,24 @@ public class OkHttpServiceImpl implements HttpService {
         } else {
             builder = mClient.newBuilder();
         }
+
+
+        builder.eventListener(new okhttp3.EventListener() {
+            @Override
+            public void callStart(Call call) {
+                eventListener.callStart();
+            }
+
+            @Override
+            public void callEnd(Call call) {
+                eventListener.callEnd();
+            }
+
+            @Override
+            public void callFailed(Call call, IOException ioe) {
+                eventListener.callFailed();
+            }
+        });
 
         HttpConfig config = request.getHttpConfig();
         if (config != null) {
@@ -81,10 +100,6 @@ public class OkHttpServiceImpl implements HttpService {
 
             if (config.getWriteTimeout() > 0) {
                 builder.readTimeout(config.getWriteTimeout(), config.getWriteTimeoutTimeUnit());
-            }
-
-            for (Interceptor interceptor : config.getInterceptors()) {
-                builder.addInterceptor(interceptor);
             }
 
             if (config.getRetryParam() != null) {
@@ -102,7 +117,7 @@ public class OkHttpServiceImpl implements HttpService {
     }
 
     @Override
-    public void sendRequest(BaseHttpRequest request, HttpListener listener) {
+    public void sendRequest(BaseHttpRequest request, HttpListener listener, EventListener eventListener) {
         Call call;
         if (!callMap.containsKey(request.getTag())) {
             Request okHttpRequest;
@@ -134,13 +149,14 @@ public class OkHttpServiceImpl implements HttpService {
                         .build();
             }
 
-            call = getOkHttpClient(request).newCall(okHttpRequest);
+            call = getOkHttpClient(request, eventListener).newCall(okHttpRequest);
             callMap.put(request.getTag(), call);
         } else {
             call = callMap.get(request.getTag());
         }
 
         if (call != null) {
+
             call.enqueue(new Callback() {
                 @Override
                 public void onFailure(@Nullable Call call, @Nullable IOException e) {
@@ -159,11 +175,9 @@ public class OkHttpServiceImpl implements HttpService {
                 }
             });
         }
-
-
     }
-    
-    
+
+
     private Headers convertHeader(BaseHttpRequest request) {
         Map<String, String> headers = request.getHeaders();
         if (headers != null) {

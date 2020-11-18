@@ -1,14 +1,17 @@
-package com.newtv.http.httpconnect;
+package com.newtv.http.internal.httpconnect;
 
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
+import androidx.annotation.Nullable;
+
+import com.newtv.http.EventListener;
 import com.newtv.http.MethodType;
 import com.newtv.http.config.HttpConfig;
 import com.newtv.http.request.BaseHttpRequest;
-import com.newtv.http.HttpListener;
-import com.newtv.http.HttpService;
+import com.newtv.http.internal.HttpListener;
+import com.newtv.http.internal.HttpService;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -17,6 +20,7 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -31,6 +35,9 @@ public class HttpConnectionServiceImpl implements HttpService {
 
     private final ExecutorService executor;
     private final Handler mHandler;
+
+
+    private final Map<Object, HttpURLConnection> connectionMap= new ConcurrentHashMap<>();
 
 
     private static final String TAG = HttpConnectionServiceImpl.class.getSimpleName();
@@ -52,13 +59,13 @@ public class HttpConnectionServiceImpl implements HttpService {
     }
 
     @Override
-    public void sendRequest(BaseHttpRequest request, HttpListener listener) {
+    public void sendRequest(BaseHttpRequest request, HttpListener listener, EventListener eventListener) {
         executor.execute(() -> {
 
             if (request.getMethodType() == MethodType.GET) {
-                sendGetRequestInternal(request, initGetUrl(request), listener);
+                sendGetRequestInternal(request, initGetUrl(request), listener, eventListener);
             } else {
-                sendPostRequestInternal(request, listener);
+                sendPostRequestInternal(request, listener, eventListener);
             }
         });
     }
@@ -88,15 +95,21 @@ public class HttpConnectionServiceImpl implements HttpService {
         return data.toString();
     }
 
-    private void sendGetRequestInternal(BaseHttpRequest request, String urlString, HttpListener listener) {
+
+
+
+    private void sendGetRequestInternal(BaseHttpRequest request, String urlString, HttpListener listener, EventListener eventListener) {
         HttpURLConnection connection = null;
 
         InputStream inputStream = null;
 
+        eventListener.callStart();
         try {
 
             URL url = new URL(urlString);
             connection = (HttpURLConnection) url.openConnection();
+
+            connectionMap.put(request.getTag(), connection);
 
             connection.setDoInput(true);
 
@@ -139,10 +152,14 @@ public class HttpConnectionServiceImpl implements HttpService {
                 Log.d(TAG, "response = " + str.toString());
             }
 
+            eventListener.callEnd();
+
         } catch (Exception e) {
+            eventListener.callFailed();
             e.printStackTrace();
         } finally {
             if (connection != null) {
+                connectionMap.remove(request.getTag());
                 connection.disconnect();
             }
             if (inputStream != null) {
@@ -156,7 +173,7 @@ public class HttpConnectionServiceImpl implements HttpService {
     }
 
 
-    private void sendPostRequestInternal(BaseHttpRequest request, HttpListener listener) {
+    private void sendPostRequestInternal(BaseHttpRequest request, HttpListener listener, EventListener eventListener) {
 
 
         HttpURLConnection connection = null;
@@ -169,6 +186,8 @@ public class HttpConnectionServiceImpl implements HttpService {
 
             URL url = new URL(request.getBaseUrl() + request.getSecondUrl());
             connection = (HttpURLConnection) url.openConnection();
+
+            connectionMap.put(request.getTag(), connection);
 
             connection.setDoInput(true);
             connection.setDoOutput(true);
@@ -238,6 +257,7 @@ public class HttpConnectionServiceImpl implements HttpService {
         } finally {
             if (connection != null) {
                 connection.disconnect();
+                connectionMap.remove(request.getTag());
             }
             if (outputStream != null) {
                 try {
@@ -303,11 +323,19 @@ public class HttpConnectionServiceImpl implements HttpService {
 
     @Override
     public void cancelRequest(Object tag) {
-
+        if (connectionMap.containsKey(tag)) {
+            HttpURLConnection connection = connectionMap.get(tag);
+            if (connection != null) {
+                connection.disconnect();
+            }
+        }
     }
 
     @Override
     public void cancelAllRequest() {
-
+        Set<Object> keys = connectionMap.keySet();
+        for (Object key : keys) {
+            cancelRequest(key);
+        }
     }
 }

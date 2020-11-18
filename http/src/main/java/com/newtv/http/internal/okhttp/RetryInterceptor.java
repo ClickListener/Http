@@ -1,4 +1,4 @@
-package com.newtv.http.okhttp;
+package com.newtv.http.internal.okhttp;
 
 import android.util.Log;
 

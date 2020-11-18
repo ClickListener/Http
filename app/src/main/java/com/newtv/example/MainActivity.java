@@ -7,14 +7,26 @@ import android.util.Log;
 import android.widget.TextView;
 
 import com.newtv.example.Request.SuggestRequest;
+import com.newtv.example.Request.TestGetRequest;
 import com.newtv.example.response.SuggestResponse;
+import com.newtv.example.response.TestResponse;
 import com.newtv.http.ApiHelper;
-import com.newtv.http.BaseHttpCallback;
+import com.newtv.http.NewTypeReference;
+
+import io.reactivex.Observable;
+import io.reactivex.ObservableSource;
+import io.reactivex.Observer;
+import io.reactivex.annotations.NonNull;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.Function;
 
 public class MainActivity extends AppCompatActivity {
 
 
-    private TextView textView;
+    private TextView content1;
+    private TextView content2;
+
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -22,28 +34,74 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
 
-        textView = findViewById(R.id.content);
+        content1 = findViewById(R.id.content1);
+        content2 = findViewById(R.id.content2);
 
-        findViewById(R.id.button1).setOnClickListener(v -> {
-            SuggestRequest request = new SuggestRequest(MainActivity.this);
-            request.contentType = "PS";
-            request.videoType = "%E7%94%B5%E8%A7%86%E5%89%A7";
-
-            ApiHelper.send(request, new BaseHttpCallback<SuggestResponse>() {
-
-                @Override
-                public void success(SuggestResponse o) {
-                    Log.e("zhangxu", "result = " + o.toString());
-                    textView.setText(o.toString());
-                }
-
-                @Override
-                public void error(Object result) {
-
-                }
-            });
+        findViewById(R.id.cancel).setOnClickListener(v -> {
+            ApiHelper.cancelRequest(MainActivity.this);
         });
 
+        findViewById(R.id.button1).setOnClickListener(v -> {
 
+            Thread t = new Thread(() -> {
+                try {
+                    Thread.sleep(3000);
+                    sendRequest();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+            });
+            t.start();
+
+        });
+    }
+
+    private void sendRequest() {
+        Log.e("zhangxu", "开始发送");
+
+        SuggestRequest request = new SuggestRequest(MainActivity.this);
+        request.contentType = "PS";
+        request.videoType = "%E7%94%B5%E8%A7%86%E5%89%A7";
+
+        Observable<SuggestResponse> suggestRequest = ApiHelper.send(request, new NewTypeReference<SuggestResponse>(){});
+
+
+        suggestRequest.flatMap(new Function<SuggestResponse, ObservableSource<TestResponse>>() {
+            @Override
+            public ObservableSource<TestResponse> apply(@NonNull SuggestResponse suggestResponse) throws Exception {
+
+                Log.e("zhangxu", "result = " + suggestResponse.toString());
+                content1.setText(suggestResponse.toString());
+
+                TestGetRequest testGetRequest = new TestGetRequest(MainActivity.this);
+                testGetRequest.a = "fy";
+                testGetRequest.f = "auto";
+                testGetRequest.t = "auto";
+                testGetRequest.w = "hello%20world";
+
+                return ApiHelper.send(testGetRequest, new NewTypeReference<TestResponse>() {});
+            }
+        }).subscribe(new Observer<TestResponse>() {
+            @Override
+            public void onSubscribe(@NonNull Disposable d) {
+
+            }
+
+            @Override
+            public void onNext(@NonNull TestResponse testResponse) {
+                Log.e("zhangxu", testResponse.toString());
+                content2.setText(testResponse.toString());
+            }
+
+            @Override
+            public void onError(@NonNull Throwable e) {
+
+            }
+
+            @Override
+            public void onComplete() {
+
+            }
+        });
     }
 }

@@ -1,9 +1,9 @@
 package com.newtv.http.factory;
 
-import com.newtv.http.HttpService;
-import com.newtv.http.httpconnect.HttpConnectionServiceImpl;
-import com.newtv.http.okhttp.OkHttpServiceImpl;
-import com.newtv.http.retrofit.RetrofitHttpServiceImpl;
+import com.newtv.http.internal.HttpService;
+import com.newtv.http.internal.httpconnect.HttpConnectionServiceImpl;
+import com.newtv.http.internal.okhttp.OkHttpServiceImpl;
+import com.newtv.http.internal.retrofit.RetrofitHttpServiceImpl;
 
 /**
  * @author ZhangXu
@@ -11,7 +11,7 @@ import com.newtv.http.retrofit.RetrofitHttpServiceImpl;
  */
 public class HttpServiceFactory {
 
-    public static int TYPE = 2;
+    public static int TYPE = 1;
 
     public static HttpService createHttpService() {
         if (TYPE == 0) {

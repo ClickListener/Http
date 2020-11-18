@@ -2,7 +2,7 @@ package com.newtv.http.config;
 
 
 
-import com.newtv.http.NewInterceptor;
+import com.newtv.http.interceptor.NewInterceptor;
 
 import java.util.ArrayList;
 import java.util.List;

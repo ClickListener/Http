@@ -1,4 +1,4 @@
-package com.newtv.http.retrofit;
+package com.newtv.http.internal.retrofit;
 
 import java.util.Map;
 

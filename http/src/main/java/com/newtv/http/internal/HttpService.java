@@ -1,5 +1,8 @@
-package com.newtv.http;
+package com.newtv.http.internal;
 
+import androidx.annotation.Nullable;
+
+import com.newtv.http.EventListener;
 import com.newtv.http.request.BaseHttpRequest;
 
 /**
@@ -12,8 +15,9 @@ public interface HttpService {
      * 发送请求
      * @param request 请求
      * @param listener 回调
+     * @param eventListener 发送事件的回调
      */
-    void sendRequest(BaseHttpRequest request, HttpListener listener);
+    void sendRequest(BaseHttpRequest request, HttpListener listener, EventListener eventListener);
 
     /**
      * 取消请求
