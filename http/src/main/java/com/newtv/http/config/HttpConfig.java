@@ -8,6 +8,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.X509TrustManager;
+
 
 /**
  *
@@ -57,8 +61,25 @@ public class HttpConfig {
      */
     private List<NewInterceptor> interceptors;
 
-
+    /**
+     * 重试
+     */
     private RetryParam retryParam;
+
+    /**
+     * SSLSocket
+     */
+    private SSLSocketFactory sslSocketFactory;
+
+    /**
+     * X509TrustManager
+     */
+    private X509TrustManager x509TrustManager;
+
+    /**
+     *
+     */
+    private HostnameVerifier hostnameVerifier;
 
     public HttpConfig(Builder builder) {
 
@@ -70,6 +91,9 @@ public class HttpConfig {
         this.writeTimeoutTimeUnit = builder.writeTimeoutTimeUnit;
         this.interceptors = builder.interceptors;
         this.retryParam = builder.retryParam;
+        this.sslSocketFactory = builder.sslSocketFactory;
+        this.x509TrustManager = builder.x509TrustManager;
+        this.hostnameVerifier = builder.hostnameVerifier;
     }
 
 
@@ -103,6 +127,18 @@ public class HttpConfig {
 
     public RetryParam getRetryParam() {
         return retryParam;
+    }
+
+    public SSLSocketFactory getSslSocketFactory() {
+        return sslSocketFactory;
+    }
+
+    public X509TrustManager getX509TrustManager() {
+        return x509TrustManager;
+    }
+
+    public HostnameVerifier getHostnameVerifier() {
+        return hostnameVerifier;
     }
 
 
@@ -147,7 +183,25 @@ public class HttpConfig {
          */
         private List<NewInterceptor> interceptors = new ArrayList<>();
 
+        /**
+         * 重试
+         */
         private RetryParam retryParam;
+
+        /**
+         * SSLSocket
+         */
+        private SSLSocketFactory sslSocketFactory;
+
+        /**
+         * X509TrustManager
+         */
+        private X509TrustManager x509TrustManager;
+
+        /**
+         *
+         */
+        private HostnameVerifier hostnameVerifier;
 
 
         public Builder addInterceptor(NewInterceptor interceptor) {
@@ -184,6 +238,20 @@ public class HttpConfig {
         public Builder retryParams(RetryParam retryParam) {
             if (retryParam != null) {
                 this.retryParam = retryParam;
+            }
+            return this;
+        }
+        public Builder sslSocketFactory(SSLSocketFactory sslSocketFactory, X509TrustManager x509TrustManager) {
+            if (sslSocketFactory != null) {
+                this.sslSocketFactory = sslSocketFactory;
+                this.x509TrustManager = x509TrustManager;
+            }
+            return this;
+        }
+
+        public Builder hostnameVerifier(HostnameVerifier hostnameVerifier) {
+            if (hostnameVerifier != null) {
+                this.hostnameVerifier = hostnameVerifier;
             }
             return this;
         }

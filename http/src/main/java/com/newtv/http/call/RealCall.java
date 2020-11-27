@@ -2,9 +2,11 @@ package com.newtv.http.call;
 
 import com.newtv.http.NewHttpClient;
 import com.newtv.http.chain.RealInterceptorChain;
+import com.newtv.http.config.RetryParam;
 import com.newtv.http.interceptor.CallServerInterceptor;
 import com.newtv.http.interceptor.NewInterceptor;
 import com.newtv.http.interceptor.RetryAndFollowUpInterceptor;
+import com.newtv.http.interceptor.RetryInterceptor;
 import com.newtv.http.internal.HttpListener;
 import com.newtv.http.request.BaseHttpRequest;
 
@@ -43,6 +45,13 @@ public class RealCall implements Call{
         List<NewInterceptor> interceptors = new ArrayList<>();
         interceptors.addAll(client.interceptors());
         interceptors.add(retryAndFollowUpInterceptor);
+
+        if (request != null && request.getHttpConfig() != null && request.getHttpConfig().getRetryParam() != null) {
+            RetryParam retryParam = request.getHttpConfig().getRetryParam();
+            if (retryParam.getMaxRetryCount() > 0) {
+                interceptors.add(new RetryInterceptor(retryParam.getMaxRetryCount()));
+            }
+        }
         interceptors.add(new CallServerInterceptor());
 
         RealInterceptorChain chain = new RealInterceptorChain(request, interceptors, client.eventListener(),0);

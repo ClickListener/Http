@@ -43,16 +43,41 @@ public class MainActivity extends AppCompatActivity {
 
         findViewById(R.id.button1).setOnClickListener(v -> {
 
-            Thread t = new Thread(() -> {
-                try {
-                    Thread.sleep(3000);
-                    sendRequest();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-            });
-            t.start();
+            sendRequest();
 
+        });
+    }
+
+    private void sendJinshanRequest() {
+        TestGetRequest testGetRequest = new TestGetRequest(MainActivity.this);
+        testGetRequest.a = "fy";
+        testGetRequest.f = "auto";
+        testGetRequest.t = "auto";
+        testGetRequest.w = "hello%20world";
+
+        Observable<TestResponse> send = ApiHelper.send(testGetRequest, new NewTypeReference<TestResponse>() {});
+
+        send.subscribe(new Observer<TestResponse>() {
+            @Override
+            public void onSubscribe(@NonNull Disposable d) {
+
+            }
+
+            @Override
+            public void onNext(@NonNull TestResponse testResponse) {
+                Log.e("zhangxu", testResponse.toString());
+                content2.setText(testResponse.toString());
+            }
+
+            @Override
+            public void onError(@NonNull Throwable e) {
+
+            }
+
+            @Override
+            public void onComplete() {
+
+            }
         });
     }
 
@@ -65,10 +90,17 @@ public class MainActivity extends AppCompatActivity {
 
         Observable<SuggestResponse> suggestRequest = ApiHelper.send(request, new NewTypeReference<SuggestResponse>(){});
 
-
-        suggestRequest.flatMap(new Function<SuggestResponse, ObservableSource<TestResponse>>() {
+        suggestRequest.onErrorReturn(new Function<Throwable, SuggestResponse>() {
+            @Override
+            public SuggestResponse apply(@NonNull Throwable throwable) throws Exception {
+                Log.e("zhangxu", "第一个请求失败");
+                return null;
+            }
+        }).flatMap(new Function<SuggestResponse, ObservableSource<TestResponse>>() {
             @Override
             public ObservableSource<TestResponse> apply(@NonNull SuggestResponse suggestResponse) throws Exception {
+
+                Log.e("zhangxu", "flatMap>>>>> apply()" + (suggestResponse == null));
 
                 Log.e("zhangxu", "result = " + suggestResponse.toString());
                 content1.setText(suggestResponse.toString());

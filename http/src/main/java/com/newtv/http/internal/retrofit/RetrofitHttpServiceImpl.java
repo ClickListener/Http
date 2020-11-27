@@ -67,6 +67,8 @@ public class RetrofitHttpServiceImpl implements HttpService {
     private RetrofitHttpServiceImpl() {
     }
 
+
+
     private Retrofit getDefaultRetrofit(BaseHttpRequest request, EventListener eventListener) {
 
         String baseUrl = request.getBaseUrl();
@@ -112,24 +114,17 @@ public class RetrofitHttpServiceImpl implements HttpService {
             }
         });
 
-        // 如果配置不为空，则设置
+        // 配置证书，
         if (config != null) {
-
-            if (config.getConnectTimeout() > 0) {
-                builder.connectTimeout(config.getConnectTimeout(), config.getConnectTimeoutTimeUnit());
-            }
-            if (config.getReadTimeout() > 0) {
-                builder.readTimeout(config.getReadTimeout(), config.getReadTimeoutTimeUnit());
+            if (config.getHostnameVerifier() != null) {
+                builder.hostnameVerifier(config.getHostnameVerifier());
             }
 
-            if (config.getWriteTimeout() > 0) {
-                builder.readTimeout(config.getWriteTimeout(), config.getWriteTimeoutTimeUnit());
+            if (config.getSslSocketFactory() != null && config.getX509TrustManager() != null) {
+                builder.sslSocketFactory(config.getSslSocketFactory(), config.getX509TrustManager());
             }
-
-//            for (Interceptor interceptor : config.getInterceptors()) {
-//                builder.addInterceptor(interceptor);
-//            }
         }
+
 
         // 默认的一些设置
         HttpLoggingInterceptor logInterceptor = new HttpLoggingInterceptor();
@@ -137,11 +132,6 @@ public class RetrofitHttpServiceImpl implements HttpService {
 
         TrustAllCerts.TrustAllParams params = TrustAllCerts.createSSLSocketFactory();
 
-//        return builder.eventListenerFactory(HttpEventListener.Companion.getFACTORY())
-//                .sslSocketFactory(params.sSLSocketFactory, params.trustManager)
-//                .hostnameVerifier(new TrustAllCerts.TrustAllHostnameVerifier())
-//                .addInterceptor(logInterceptor)
-//                .build();
         return builder.sslSocketFactory(params.sSLSocketFactory, params.trustManager)
                 .hostnameVerifier(new TrustAllCerts.TrustAllHostnameVerifier())
                 .addInterceptor(logInterceptor)

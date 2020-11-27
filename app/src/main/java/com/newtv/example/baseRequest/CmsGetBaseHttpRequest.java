@@ -5,6 +5,7 @@ import android.content.Context;
 import com.alibaba.fastjson.JSONObject;
 import com.newtv.http.config.HttpConfig;
 import com.newtv.http.config.RetryParam;
+import com.newtv.http.internal.retrofit.TrustAllCerts;
 import com.newtv.http.request.GetBaseHttpRequest;
 
 import java.util.HashMap;
@@ -47,6 +48,8 @@ public abstract class CmsGetBaseHttpRequest extends GetBaseHttpRequest {
                 .connectTimeout(10, TimeUnit.SECONDS)
                 .writeTimeout(3, TimeUnit.SECONDS)
                 .retryParams(retryParam)
+                .sslSocketFactory(TrustAllCerts.createSSLSocketFactory().sSLSocketFactory, TrustAllCerts.createSSLSocketFactory().trustManager)
+                .hostnameVerifier(new TrustAllCerts.TrustAllHostnameVerifier())
                 .build();
     }
 }

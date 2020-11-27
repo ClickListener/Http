@@ -1,6 +1,8 @@
 package com.newtv.http;
 
 
+import android.util.Log;
+
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.TypeReference;
 import com.newtv.http.internal.HttpListener;
@@ -30,6 +32,10 @@ public class ApiHelper {
 
     private static final HttpService httpService = HttpServiceImpl.getInstance();
 
+    public static void init() {
+
+    }
+
     public static <T> Observable<T> send(BaseHttpRequest request, TypeReference<T> type) {
         return send(request, type,null);
     }
@@ -44,11 +50,17 @@ public class ApiHelper {
                 if (r == null) {
                     return;
                 }
+
+                Log.e("zhangxu", "APIHLEPER>>>>>>   success =" + result);
+
                 emitter.onNext(r);
+
             }
 
             @Override
             public void onRequestError(Throwable e) {
+                Log.e("zhangxu", "APIHLEPER>>>>>>   error =" + e.toString());
+
                 emitter.onError(e);
             }
         }, eventListener));

@@ -39,7 +39,7 @@ public class TestResponse implements Serializable {
     public String toString() {
         return "TestResponse{" +
                 "status='" + status + '\'' +
-                ", content=" + content.toString() +
+                ", content=" + (content != null ? content.toString() : "null") +
                 '}';
     }
 }

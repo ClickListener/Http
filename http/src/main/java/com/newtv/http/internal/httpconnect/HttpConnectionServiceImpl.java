@@ -25,6 +25,9 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLSocketFactory;
+
 /**
  * @author ZhangXu
  * @date 2020/11/9
@@ -103,6 +106,19 @@ public class HttpConnectionServiceImpl implements HttpService {
 
         InputStream inputStream = null;
 
+
+        HttpConfig config = request.getHttpConfig();
+        if (config != null) {
+            if (config.getHostnameVerifier() != null) {
+                HttpsURLConnection.setDefaultHostnameVerifier(config.getHostnameVerifier());
+            }
+            if (config.getSslSocketFactory() != null) {
+                HttpsURLConnection.setDefaultSSLSocketFactory(config.getSslSocketFactory());
+            } else {
+                HttpsURLConnection.setDefaultSSLSocketFactory((SSLSocketFactory) SSLSocketFactory.getDefault());
+            }
+        }
+
         eventListener.callStart();
         try {
 
@@ -127,7 +143,7 @@ public class HttpConnectionServiceImpl implements HttpService {
                 inputStream = connection.getInputStream();
 
                 byte[] buffer = new byte[1024];
-                int length = 0;
+                int length;
                 StringBuilder str = new StringBuilder();
                 while ((length = inputStream.read(buffer)) > -1) {
                     str.append(new String(buffer, 0, length));
@@ -143,18 +159,25 @@ public class HttpConnectionServiceImpl implements HttpService {
                 inputStream = connection.getInputStream();
 
                 byte[] buffer = new byte[1024];
-                int length = 0;
+                int length;
                 StringBuilder str = new StringBuilder();
                 while ((length = inputStream.read(buffer)) > -1) {
                     str.append(new String(buffer, 0, length));
                 }
 
                 Log.d(TAG, "response = " + str.toString());
+
+                mHandler.post(() -> {
+                    listener.onRequestError(new Exception(str.toString()));
+                });
             }
 
             eventListener.callEnd();
 
         } catch (Exception e) {
+            mHandler.post(() -> {
+                listener.onRequestError(e);
+            });
             eventListener.callFailed();
             e.printStackTrace();
         } finally {
@@ -181,6 +204,19 @@ public class HttpConnectionServiceImpl implements HttpService {
         InputStream inputStream = null;
 
         OutputStream outputStream = null;
+
+        HttpConfig config = request.getHttpConfig();
+        if (config != null) {
+            if (config.getHostnameVerifier() != null) {
+                HttpsURLConnection.setDefaultHostnameVerifier(config.getHostnameVerifier());
+            }
+            if (config.getSslSocketFactory() != null) {
+                HttpsURLConnection.setDefaultSSLSocketFactory(config.getSslSocketFactory());
+            } else {
+                HttpsURLConnection.setDefaultSSLSocketFactory((SSLSocketFactory) SSLSocketFactory.getDefault());
+            }
+        }
+
 
         try {
 
@@ -237,6 +273,7 @@ public class HttpConnectionServiceImpl implements HttpService {
                 mHandler.post(() -> {
                     listener.onRequestResult(str.toString());
                 });
+                eventListener.callEnd();
 
             } else {
                 inputStream = connection.getInputStream();
@@ -248,11 +285,14 @@ public class HttpConnectionServiceImpl implements HttpService {
                     str.append(new String(buffer, 0, length));
                 }
 
+                eventListener.callFailed();
+
                 Log.d(TAG, "response = " + str.toString());
             }
 
 
         } catch (Exception e) {
+            eventListener.callFailed();
             e.printStackTrace();
         } finally {
             if (connection != null) {

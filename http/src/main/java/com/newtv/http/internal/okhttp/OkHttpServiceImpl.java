@@ -90,21 +90,12 @@ public class OkHttpServiceImpl implements HttpService {
 
         HttpConfig config = request.getHttpConfig();
         if (config != null) {
-
-            if (config.getConnectTimeout() > 0) {
-                builder.connectTimeout(config.getConnectTimeout(), config.getConnectTimeoutTimeUnit());
-            }
-            if (config.getReadTimeout() > 0) {
-                builder.readTimeout(config.getReadTimeout(), config.getReadTimeoutTimeUnit());
+            if (config.getHostnameVerifier() != null) {
+                builder.hostnameVerifier(config.getHostnameVerifier());
             }
 
-            if (config.getWriteTimeout() > 0) {
-                builder.readTimeout(config.getWriteTimeout(), config.getWriteTimeoutTimeUnit());
-            }
-
-            if (config.getRetryParam() != null) {
-                RetryInterceptor retryInterceptor = new RetryInterceptor(3);
-                builder.addInterceptor(retryInterceptor);
+            if (config.getSslSocketFactory() != null && config.getX509TrustManager() != null) {
+                builder.sslSocketFactory(config.getSslSocketFactory(), config.getX509TrustManager());
             }
         }
 
@@ -170,7 +161,11 @@ public class OkHttpServiceImpl implements HttpService {
                     callMap.remove(request.getTag());
 
                     if (response != null && response.body() != null) {
-                        handleSuccessCallback(listener, response.body().string());
+                        if (response.code() == 200) {
+                            handleSuccessCallback(listener, response.body().string());
+                        } else {
+                            handleErrorCallback(listener, new IOException(response.body().string()));
+                        }
                     }
                 }
             });

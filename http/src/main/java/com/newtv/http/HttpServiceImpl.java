@@ -1,13 +1,18 @@
 package com.newtv.http;
 
+import android.util.Log;
+
 import androidx.annotation.Nullable;
 
 import com.alibaba.fastjson.JSON;
 import com.newtv.http.call.Call;
+import com.newtv.http.factory.HttpServiceFactory;
 import com.newtv.http.internal.HttpListener;
 import com.newtv.http.internal.HttpService;
 import com.newtv.http.request.BaseHttpRequest;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -33,46 +38,55 @@ public class HttpServiceImpl implements HttpService {
         return INSTANCE;
     }
 
-    private final Map<Object, Call> callMap = new ConcurrentHashMap<>();
+    private final Map<Object, List<Call>> callMap = new ConcurrentHashMap<>();
 
 
     @Override
     public void sendRequest(BaseHttpRequest request, HttpListener listener, @Nullable EventListener eventListener) {
         Call call;
-        if (callMap.containsKey(request.getTag())) {
-            call = callMap.get(request.getTag());
-        } else {
-            NewHttpClient client = new NewHttpClient.Builder()
-                    .addInterceptors(request.getHttpConfig().getInterceptors())
-                    .eventListener(eventListener)
-                    .build();
-            call = client.newCall(request);
-            callMap.put(request.getTag(), call);
+        List<Call> calls = callMap.get(request.getTag());
+        if (calls == null) {
+            calls = new ArrayList<>();
+            callMap.put(request.getTag(), calls);
         }
-        if (call != null) {
-            call.enqueue(new HttpListener() {
-                @Override
-                public void onRequestResult(String result) {
-                    listener.onRequestResult(result);
-                    callMap.remove(request.getTag());
-                }
+        NewHttpClient client = new NewHttpClient.Builder()
+                .addInterceptors(request.getHttpConfig().getInterceptors())
+                .eventListener(eventListener)
+                .build();
+        call = client.newCall(request);
 
-                @Override
-                public void onRequestError(Throwable e) {
-                    listener.onRequestError(e);
-                    callMap.remove(request.getTag());
-                }
-            });
-        }
+        calls.add(call);
+
+        List<Call> finalCalls = calls;
+        call.enqueue(new HttpListener() {
+            @Override
+            public void onRequestResult(String result) {
+                Log.e("zhangxu", "HttpServiceImpl>>>>>>   success =" + result);
+                listener.onRequestResult(result);
+                finalCalls.remove(call);
+            }
+
+            @Override
+            public void onRequestError(Throwable e) {
+
+                Log.e("zhangxu", "HttpServiceImpl>>>>>>   error =" + e.toString());
+                listener.onRequestError(e);
+                finalCalls.remove(call);
+            }
+        });
     }
 
     @Override
     public void cancelRequest(Object tag) {
         if (callMap.containsKey(tag)) {
-            Call call = callMap.remove(tag);
-            if (call != null) {
-                call.cancel();
+            List<Call> calls = callMap.remove(tag);
+            Log.e("zhangxu", "calls.size = " + calls.size());
+            for (Call call : calls) {
+                if (call != null) {
+                    call.cancel();
+                }
             }
+
         }
     }
 
