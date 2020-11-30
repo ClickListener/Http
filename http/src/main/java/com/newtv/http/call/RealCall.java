@@ -49,7 +49,11 @@ public class RealCall implements Call{
         if (request != null && request.getHttpConfig() != null && request.getHttpConfig().getRetryParam() != null) {
             RetryParam retryParam = request.getHttpConfig().getRetryParam();
             if (retryParam.getMaxRetryCount() > 0) {
-                interceptors.add(new RetryInterceptor(retryParam.getMaxRetryCount()));
+                if (retryParam.getRetryDelay() > 0) {
+                    interceptors.add(new RetryInterceptor(retryParam.getMaxRetryCount(), retryParam.getRetryDelay()));
+                } else {
+                    interceptors.add(new RetryInterceptor(retryParam.getMaxRetryCount()));
+                }
             }
         }
         interceptors.add(new CallServerInterceptor());

@@ -97,6 +97,16 @@ public class OkHttpServiceImpl implements HttpService {
             if (config.getSslSocketFactory() != null && config.getX509TrustManager() != null) {
                 builder.sslSocketFactory(config.getSslSocketFactory(), config.getX509TrustManager());
             }
+            if (config.getConnectTimeout() > 0) {
+                builder.connectTimeout(config.getConnectTimeout(), config.getConnectTimeoutTimeUnit());
+            }
+            if (config.getReadTimeout() > 0) {
+                builder.readTimeout(config.getReadTimeout(), config.getReadTimeoutTimeUnit());
+            }
+
+            if (config.getWriteTimeout() > 0) {
+                builder.writeTimeout(config.getWriteTimeout(), config.getWriteTimeoutTimeUnit());
+            }
         }
 
         // 默认的一些设置

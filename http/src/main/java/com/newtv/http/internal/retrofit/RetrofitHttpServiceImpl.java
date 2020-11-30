@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 import io.reactivex.Observable;
 import io.reactivex.Observer;
@@ -152,12 +153,6 @@ public class RetrofitHttpServiceImpl implements HttpService {
             MediaType type = MediaType.parse("application/json; charset=utf-8");
             RequestBody body = RequestBody.create(type, request.toJson());
             observable = apiService.postWithBody(request.getHeaders(), request.getSecondUrl(), body);
-        }
-        // 增加重试选项
-        if (request.getHttpConfig() != null && request.getHttpConfig().getRetryParam() != null) {
-            RetryParam retryParam = request.getHttpConfig().getRetryParam();
-            observable = observable.retryWhen(new RetryWithDelay(retryParam.getMaxRetryCount(),
-                    retryParam.getRetryDelay(), retryParam.getTimeUnit()));
         }
         observable.subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())

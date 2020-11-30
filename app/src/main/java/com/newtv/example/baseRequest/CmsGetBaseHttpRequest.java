@@ -43,7 +43,7 @@ public abstract class CmsGetBaseHttpRequest extends GetBaseHttpRequest {
     @Override
     public HttpConfig getHttpConfig() {
         HttpConfig.Builder builder = new HttpConfig.Builder();
-        RetryParam retryParam = new RetryParam(3, 1, TimeUnit.SECONDS);
+        RetryParam retryParam = new RetryParam(3, 1000);
         return builder.readTimeout(3, TimeUnit.SECONDS)
                 .connectTimeout(10, TimeUnit.SECONDS)
                 .writeTimeout(3, TimeUnit.SECONDS)

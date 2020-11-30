@@ -10,15 +10,12 @@ public class RetryParam {
 
     private final int maxRetryCount;
     private final int retryDelay;
-    private final TimeUnit timeUnit;
 
 
-    public RetryParam(int maxRetryCount, int retryDelay, TimeUnit timeUnit) {
+    public RetryParam(int maxRetryCount, int retryDelay) {
         this.maxRetryCount = maxRetryCount;
         this.retryDelay = retryDelay;
-        this.timeUnit = timeUnit;
     }
-
 
     public int getMaxRetryCount() {
         return maxRetryCount;
@@ -28,8 +25,4 @@ public class RetryParam {
         return retryDelay;
     }
 
-
-    public TimeUnit getTimeUnit() {
-        return timeUnit;
-    }
 }

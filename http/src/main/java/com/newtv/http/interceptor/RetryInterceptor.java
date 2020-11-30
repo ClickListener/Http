@@ -1,5 +1,7 @@
 package com.newtv.http.interceptor;
 
+import android.os.Handler;
+import android.os.Looper;
 import android.util.Log;
 
 import com.newtv.http.internal.HttpListener;
@@ -11,13 +13,21 @@ import java.io.IOException;
  * @author ZhangXu
  * @date 2020/11/18
  */
-public class RetryInterceptor implements NewInterceptor{
+public class RetryInterceptor implements NewInterceptor {
 
     private final int maxRetry;
     private int retryNum = 0;
+    private final int delay;
+
+    private static final Handler mHandler = new Handler(Looper.getMainLooper());
 
     public RetryInterceptor(int maxRetry) {
+        this(maxRetry, 0);
+    }
+
+    public RetryInterceptor(int maxRetry, int delay) {
         this.maxRetry = maxRetry;
+        this.delay = delay;
     }
 
     @Override
@@ -42,11 +52,14 @@ public class RetryInterceptor implements NewInterceptor{
                 if (retryNum < maxRetry) {
                     Log.e("zhangxu", "retryNum = " + retryNum);
                     retryNum++;
-                    try {
-                        retry(chain, listener);
-                    } catch (IOException ioException) {
-                        ioException.printStackTrace();
-                    }
+                    mHandler.postDelayed(() -> {
+                        try {
+                            retry(chain, listener);
+                        } catch (IOException ioException) {
+                            ioException.printStackTrace();
+                        }
+                    }, delay);
+
                 } else {
                     listener.onRequestError(e);
                 }
