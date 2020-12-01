@@ -58,10 +58,10 @@ public class RealCall implements Call{
         }
         interceptors.add(new CallServerInterceptor());
 
-        RealInterceptorChain chain = new RealInterceptorChain(request, interceptors, client.eventListener(),0);
+        RealInterceptorChain chain = new RealInterceptorChain(request, interceptors,0);
 
         try {
-            chain.proceed(request, listener);
+            chain.proceed(request, listener, client.eventListener());
         } catch (IOException e) {
             e.printStackTrace();
         }

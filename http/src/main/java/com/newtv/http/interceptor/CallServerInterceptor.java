@@ -1,6 +1,6 @@
 package com.newtv.http.interceptor;
 
-import com.newtv.http.chain.RealInterceptorChain;
+import com.newtv.http.EventListener;
 import com.newtv.http.internal.HttpListener;
 import com.newtv.http.internal.HttpService;
 import com.newtv.http.factory.HttpServiceFactory;
@@ -17,14 +17,11 @@ public class CallServerInterceptor implements NewInterceptor {
 
 
     @Override
-    public void intercept(Chain chain, HttpListener listener) throws IOException {
+    public void intercept(Chain chain, HttpListener listener, EventListener eventListener) throws IOException {
 
-        RealInterceptorChain realChain = (RealInterceptorChain) chain;
-
-        BaseHttpRequest request = realChain.request();
+        BaseHttpRequest request = chain.request();
         HttpService httpService = HttpServiceFactory.createHttpService();
-
-        httpService.sendRequest(request, listener, realChain.eventListener());
+        httpService.sendRequest(request, listener, eventListener);
 
 
     }

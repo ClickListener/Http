@@ -18,16 +18,13 @@ public class RealInterceptorChain implements NewInterceptor.Chain {
     private final BaseHttpRequest request;
     private final List<NewInterceptor> interceptors;
 
-    private final EventListener eventListener;
-
     private final int index;
 
 
-    public RealInterceptorChain(BaseHttpRequest request, List<NewInterceptor> interceptors, EventListener eventListener, int index) {
+    public RealInterceptorChain(BaseHttpRequest request, List<NewInterceptor> interceptors, int index) {
         this.request = request;
         this.interceptors = interceptors;
         this.index = index;
-        this.eventListener = eventListener;
     }
 
     @Override
@@ -35,23 +32,18 @@ public class RealInterceptorChain implements NewInterceptor.Chain {
         return request;
     }
 
-
-    public EventListener eventListener() {
-        return eventListener;
-    }
-
     @Override
-    public void proceed(BaseHttpRequest request, HttpListener listener) throws IOException{
+    public void proceed(BaseHttpRequest request, HttpListener listener, EventListener eventListener) throws IOException{
 
         if (index >= interceptors.size()) {
             throw new AssertionError();
         }
 
-        RealInterceptorChain chain = new RealInterceptorChain(request, interceptors, eventListener, index + 1);
+        RealInterceptorChain chain = new RealInterceptorChain(request, interceptors, index + 1);
 
         NewInterceptor interceptor = interceptors.get(index);
 
-        interceptor.intercept(chain, listener);
+        interceptor.intercept(chain, listener, eventListener);
 
 
     }

@@ -18,6 +18,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -40,7 +42,7 @@ public class HttpConnectionServiceImpl implements HttpService {
     private final Handler mHandler;
 
 
-    private final Map<Object, HttpURLConnection> connectionMap= new ConcurrentHashMap<>();
+    private final Map<Object, List<HttpURLConnection>> connectionMap= new ConcurrentHashMap<>();
 
 
     private static final String TAG = HttpConnectionServiceImpl.class.getSimpleName();
@@ -125,7 +127,14 @@ public class HttpConnectionServiceImpl implements HttpService {
             URL url = new URL(urlString);
             connection = (HttpURLConnection) url.openConnection();
 
-            connectionMap.put(request.getTag(), connection);
+            if (connectionMap.containsKey(request.getTag())) {
+                List<HttpURLConnection> httpURLConnections = connectionMap.get(request.getTag());
+                httpURLConnections.add(connection);
+            } else {
+                List<HttpURLConnection> httpURLConnections = new ArrayList<>();
+                httpURLConnections.add(connection);
+                connectionMap.put(request.getTag(), httpURLConnections);
+            }
 
             connection.setDoInput(true);
 
@@ -181,9 +190,12 @@ public class HttpConnectionServiceImpl implements HttpService {
             eventListener.callFailed();
             e.printStackTrace();
         } finally {
+            Log.e(TAG, "HttpConnectionServiceImpl ----> send GET FINAL");
             if (connection != null) {
-                connectionMap.remove(request.getTag());
                 connection.disconnect();
+                if (connectionMap.get(request.getTag()) != null) {
+                    connectionMap.get(request.getTag()).remove(connection);
+                }
             }
             if (inputStream != null) {
                 try {
@@ -223,7 +235,14 @@ public class HttpConnectionServiceImpl implements HttpService {
             URL url = new URL(request.getBaseUrl() + request.getSecondUrl());
             connection = (HttpURLConnection) url.openConnection();
 
-            connectionMap.put(request.getTag(), connection);
+            if (connectionMap.containsKey(request.getTag())) {
+                List<HttpURLConnection> httpURLConnections = connectionMap.get(request.getTag());
+                httpURLConnections.add(connection);
+            } else {
+                List<HttpURLConnection> httpURLConnections = new ArrayList<>();
+                httpURLConnections.add(connection);
+                connectionMap.put(request.getTag(), httpURLConnections);
+            }
 
             connection.setDoInput(true);
             connection.setDoOutput(true);
@@ -285,19 +304,25 @@ public class HttpConnectionServiceImpl implements HttpService {
                     str.append(new String(buffer, 0, length));
                 }
 
+                Log.d(TAG, "response = " + str.toString());
+                mHandler.post(() -> {
+                    listener.onRequestResult(str.toString());
+                });
                 eventListener.callFailed();
 
-                Log.d(TAG, "response = " + str.toString());
             }
 
 
         } catch (Exception e) {
+            mHandler.post(() -> listener.onRequestError(e));
             eventListener.callFailed();
             e.printStackTrace();
         } finally {
             if (connection != null) {
                 connection.disconnect();
-                connectionMap.remove(request.getTag());
+                if (connectionMap.get(request.getTag()) != null) {
+                    connectionMap.get(request.getTag()).remove(connection);
+                }
             }
             if (outputStream != null) {
                 try {
@@ -363,12 +388,24 @@ public class HttpConnectionServiceImpl implements HttpService {
 
     @Override
     public void cancelRequest(Object tag) {
-        if (connectionMap.containsKey(tag)) {
-            HttpURLConnection connection = connectionMap.get(tag);
-            if (connection != null) {
-                connection.disconnect();
+        executor.execute(() -> {
+
+            if (tag == null) {
+                return;
             }
-        }
+            if (connectionMap.containsKey(tag)) {
+                List<HttpURLConnection> httpURLConnections = connectionMap.remove(tag);
+
+                Log.e("zhangxu", "HttpConnectionServiceImpl ---> cancel()  +  size = " + httpURLConnections.size());
+
+                for (HttpURLConnection connection : httpURLConnections) {
+                    if (connection != null) {
+                        connection.disconnect();
+                    }
+                }
+            }
+        });
+
     }
 
     @Override

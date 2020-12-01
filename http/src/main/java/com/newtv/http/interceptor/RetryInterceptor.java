@@ -4,6 +4,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
+import com.newtv.http.EventListener;
 import com.newtv.http.internal.HttpListener;
 import com.newtv.http.request.BaseHttpRequest;
 
@@ -31,14 +32,18 @@ public class RetryInterceptor implements NewInterceptor {
     }
 
     @Override
-    public void intercept(Chain chain, HttpListener listener) throws IOException {
+    public void intercept(Chain chain, HttpListener listener, EventListener eventListener) throws IOException {
 
-        retry(chain, listener);
+        retryNum++;
+        retry(chain, listener, eventListener);
 
     }
 
 
-    private void retry(Chain chain, HttpListener listener) throws IOException {
+    private void retry(Chain chain, HttpListener listener, EventListener eventListener) throws IOException {
+
+        Log.e("zhangxu", "retryNum = " + retryNum);
+
         BaseHttpRequest request = chain.request();
 
         HttpListener _listener = new HttpListener() {
@@ -49,12 +54,16 @@ public class RetryInterceptor implements NewInterceptor {
 
             @Override
             public void onRequestError(Throwable e) {
+                // 如果是用户主动取消， 则不再进行重试
+                if (e.toString().contains("Canceled") || e.toString().contains("Socket closed")) {
+                    listener.onRequestError(e);
+                    return;
+                }
                 if (retryNum < maxRetry) {
-                    Log.e("zhangxu", "retryNum = " + retryNum);
                     retryNum++;
                     mHandler.postDelayed(() -> {
                         try {
-                            retry(chain, listener);
+                            retry(chain, listener, eventListener);
                         } catch (IOException ioException) {
                             ioException.printStackTrace();
                         }
@@ -65,7 +74,26 @@ public class RetryInterceptor implements NewInterceptor {
                 }
             }
         };
-        chain.proceed(request, _listener);
+
+        EventListener _eventListener = new EventListener() {
+            @Override
+            public void callStart() {
+                if (retryNum == 1) eventListener.callStart();
+
+            }
+
+            @Override
+            public void callEnd() {
+                if (retryNum >= maxRetry) eventListener.callEnd();
+            }
+
+            @Override
+            public void callFailed() {
+                if (retryNum >= maxRetry) eventListener.callFailed();
+            }
+        };
+
+        chain.proceed(request, _listener, _eventListener);
 
 
     }

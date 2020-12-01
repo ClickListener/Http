@@ -2,6 +2,7 @@ package com.newtv.http.internal.okhttp;
 
 import android.os.Handler;
 import android.os.Looper;
+import android.util.Log;
 
 import androidx.annotation.Nullable;
 
@@ -14,6 +15,8 @@ import com.newtv.http.MethodType;
 
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -40,7 +43,7 @@ public class OkHttpServiceImpl implements HttpService {
 
     private OkHttpClient mClient;
 
-    private final Map<Object, Call> callMap = new ConcurrentHashMap<>();
+    private final Map<Object, List<Call>> callMap = new ConcurrentHashMap<>();
 
     private final Handler handler = new Handler(Looper.getMainLooper());
 
@@ -120,66 +123,68 @@ public class OkHttpServiceImpl implements HttpService {
     @Override
     public void sendRequest(BaseHttpRequest request, HttpListener listener, EventListener eventListener) {
         Call call;
-        if (!callMap.containsKey(request.getTag())) {
-            Request okHttpRequest;
+        List<Call> calls = callMap.get(request.getTag());
 
-            if (request.getMethodType() == MethodType.GET) {
+        Request okHttpRequest;
 
-                // 组装参数
-                HttpUrl.Builder builder = HttpUrl.parse(request.getBaseUrl() + request.getSecondUrl())
-                        .newBuilder();
-                Map<String, String> params = request.getParams();
-                if (params != null) {
-                    Set<String> keys = params.keySet();
-                    for (String key : keys) {
-                        builder = builder.addEncodedQueryParameter(key, params.get(key));
-                    }
+        if (request.getMethodType() == MethodType.GET) {
+
+            // 组装参数
+            HttpUrl.Builder builder = HttpUrl.parse(request.getBaseUrl() + request.getSecondUrl())
+                    .newBuilder();
+            Map<String, String> params = request.getParams();
+            if (params != null) {
+                Set<String> keys = params.keySet();
+                for (String key : keys) {
+                    builder = builder.addEncodedQueryParameter(key, params.get(key));
                 }
-                okHttpRequest = new Request.Builder()
-                        .headers(convertHeader(request))
-                        .url(builder.build())
-                        .get()
-                        .build();
-            } else {
-                MediaType type = MediaType.parse("application/json; charset=utf-8");
-                RequestBody body = RequestBody.create(type, request.toJson());
-                okHttpRequest = new Request.Builder()
-                        .headers(convertHeader(request))
-                        .post(body)
-                        .url(request.getBaseUrl() + request.getSecondUrl())
-                        .build();
+            }
+            okHttpRequest = new Request.Builder()
+                    .headers(convertHeader(request))
+                    .url(builder.build())
+                    .get()
+                    .build();
+        } else {
+            MediaType type = MediaType.parse("application/json; charset=utf-8");
+            RequestBody body = RequestBody.create(type, request.toJson());
+            okHttpRequest = new Request.Builder()
+                    .headers(convertHeader(request))
+                    .post(body)
+                    .url(request.getBaseUrl() + request.getSecondUrl())
+                    .build();
+        }
+
+        call = getOkHttpClient(request, eventListener).newCall(okHttpRequest);
+
+        if (calls == null) {
+            calls = new ArrayList<>();
+            calls.add(call);
+            callMap.put(request.getTag(), calls);
+        } else {
+            calls.add(call);
+        }
+
+        call.enqueue(new Callback() {
+            @Override
+            public void onFailure(@Nullable Call call, @Nullable IOException e) {
+                handleErrorCallback(listener, e);
+                callMap.remove(request.getTag());
             }
 
-            call = getOkHttpClient(request, eventListener).newCall(okHttpRequest);
-            callMap.put(request.getTag(), call);
-        } else {
-            call = callMap.get(request.getTag());
-        }
+            @Override
+            public void onResponse(@Nullable Call call, @Nullable Response response) throws IOException {
 
-        if (call != null) {
+                callMap.remove(request.getTag());
 
-            call.enqueue(new Callback() {
-                @Override
-                public void onFailure(@Nullable Call call, @Nullable IOException e) {
-                    handleErrorCallback(listener, e);
-                    callMap.remove(request.getTag());
-                }
-
-                @Override
-                public void onResponse(@Nullable Call call, @Nullable Response response) throws IOException {
-
-                    callMap.remove(request.getTag());
-
-                    if (response != null && response.body() != null) {
-                        if (response.code() == 200) {
-                            handleSuccessCallback(listener, response.body().string());
-                        } else {
-                            handleErrorCallback(listener, new IOException(response.body().string()));
-                        }
+                if (response != null && response.body() != null) {
+                    if (response.code() == 200) {
+                        handleSuccessCallback(listener, response.body().string());
+                    } else {
+                        handleErrorCallback(listener, new IOException(response.body().string()));
                     }
                 }
-            });
-        }
+            }
+        });
     }
 
 
@@ -206,10 +211,18 @@ public class OkHttpServiceImpl implements HttpService {
 
     @Override
     public void cancelRequest(Object tag) {
-        if (callMap.containsKey(tag)) {
-            Call call = callMap.get(tag);
-            if (call != null) {
-                call.cancel();
+        if (tag == null) {
+            return;
+        }
+
+        List<Call> remove = callMap.remove(tag);
+
+        Log.e("zhangxu", "OkHttp ---> cancel()  +  size = " + remove.size());
+        if (remove != null) {
+            for (Call call : remove) {
+                if (call != null) {
+                    call.cancel();
+                }
             }
         }
     }

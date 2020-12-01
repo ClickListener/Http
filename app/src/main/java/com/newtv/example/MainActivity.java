@@ -11,6 +11,7 @@ import com.newtv.example.Request.TestGetRequest;
 import com.newtv.example.response.SuggestResponse;
 import com.newtv.example.response.TestResponse;
 import com.newtv.http.ApiHelper;
+import com.newtv.http.EventListener;
 import com.newtv.http.NewTypeReference;
 
 import io.reactivex.Observable;
@@ -38,12 +39,18 @@ public class MainActivity extends AppCompatActivity {
         content2 = findViewById(R.id.content2);
 
         findViewById(R.id.cancel).setOnClickListener(v -> {
-            ApiHelper.cancelRequest(MainActivity.this);
+            sendNewTvRequest();
+            content1.postDelayed(() -> {
+                ApiHelper.cancelRequest(MainActivity.this);
+            }, 500);
+
+//            sendNewTvRequest();
+//            sendJinshanRequest();
         });
 
         findViewById(R.id.button1).setOnClickListener(v -> {
-
-            sendRequest();
+            sendNewTvRequest();
+//            sendRequest();
 
         });
     }
@@ -67,6 +74,56 @@ public class MainActivity extends AppCompatActivity {
             public void onNext(@NonNull TestResponse testResponse) {
                 Log.e("zhangxu", testResponse.toString());
                 content2.setText(testResponse.toString());
+            }
+
+            @Override
+            public void onError(@NonNull Throwable e) {
+
+            }
+
+            @Override
+            public void onComplete() {
+
+            }
+        });
+    }
+
+    private void sendNewTvRequest() {
+
+        SuggestRequest request = new SuggestRequest(MainActivity.this);
+        request.contentType = "PS";
+        request.videoType = "%E7%94%B5%E8%A7%86%E5%89%A7";
+
+        Observable<SuggestResponse> send = ApiHelper.send(request, new NewTypeReference<SuggestResponse>() {
+        }, new EventListener() {
+            @Override
+            public void callStart() {
+                super.callStart();
+                Log.e("zhangxu", "callStart()");
+            }
+
+            @Override
+            public void callEnd() {
+                super.callEnd();
+                Log.e("zhangxu", "callEnd()");
+            }
+
+            @Override
+            public void callFailed() {
+                super.callFailed();
+                Log.e("zhangxu", "callFailed()");
+            }
+        });
+
+        send.subscribe(new Observer<SuggestResponse>() {
+            @Override
+            public void onSubscribe(@NonNull Disposable d) {
+
+            }
+
+            @Override
+            public void onNext(@NonNull SuggestResponse suggestResponse) {
+                Log.e("zhangxu", "result = " + suggestResponse.toString());
             }
 
             @Override

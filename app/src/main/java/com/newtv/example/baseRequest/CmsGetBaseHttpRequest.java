@@ -5,7 +5,7 @@ import android.content.Context;
 import com.alibaba.fastjson.JSONObject;
 import com.newtv.http.config.HttpConfig;
 import com.newtv.http.config.RetryParam;
-import com.newtv.http.internal.retrofit.TrustAllCerts;
+import com.newtv.http.TrustAllCerts;
 import com.newtv.http.request.GetBaseHttpRequest;
 
 import java.util.HashMap;

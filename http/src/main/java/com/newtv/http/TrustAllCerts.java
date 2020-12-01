@@ -1,4 +1,4 @@
-package com.newtv.http.internal.retrofit;
+package com.newtv.http;
 
 import android.annotation.SuppressLint;
 

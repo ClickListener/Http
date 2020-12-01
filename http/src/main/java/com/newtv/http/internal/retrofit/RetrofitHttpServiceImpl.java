@@ -3,11 +3,11 @@ package com.newtv.http.internal.retrofit;
 
 
 import com.newtv.http.EventListener;
+import com.newtv.http.TrustAllCerts;
 import com.newtv.http.internal.HttpListener;
 import com.newtv.http.internal.HttpService;
 import com.newtv.http.MethodType;
 import com.newtv.http.config.HttpConfig;
-import com.newtv.http.config.RetryParam;
 import com.newtv.http.request.BaseHttpRequest;
 
 
@@ -16,7 +16,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 
 import io.reactivex.Observable;
 import io.reactivex.Observer;
@@ -115,7 +114,7 @@ public class RetrofitHttpServiceImpl implements HttpService {
             }
         });
 
-        // 配置证书，
+        // 配置证书
         if (config != null) {
             if (config.getHostnameVerifier() != null) {
                 builder.hostnameVerifier(config.getHostnameVerifier());
@@ -131,11 +130,8 @@ public class RetrofitHttpServiceImpl implements HttpService {
         HttpLoggingInterceptor logInterceptor = new HttpLoggingInterceptor();
         logInterceptor.setLevel(HttpLoggingInterceptor.Level.BODY);
 
-        TrustAllCerts.TrustAllParams params = TrustAllCerts.createSSLSocketFactory();
 
-        return builder.sslSocketFactory(params.sSLSocketFactory, params.trustManager)
-                .hostnameVerifier(new TrustAllCerts.TrustAllHostnameVerifier())
-                .addInterceptor(logInterceptor)
+        return builder.addInterceptor(logInterceptor)
                 .build();
     }
 
@@ -223,10 +219,9 @@ public class RetrofitHttpServiceImpl implements HttpService {
         }
 
         CompositeDisposable remove = compositeDisposableMapping.remove(tag);
-        if (compositeDisposableMapping.contains(tag)) {
+        if (remove != null) {
             remove.dispose();
             remove.clear();
-
         }
     }
 
