@@ -6,8 +6,10 @@ import android.os.Bundle;
 import android.util.Log;
 import android.widget.TextView;
 
+import com.newtv.example.Request.ActiveRequest;
 import com.newtv.example.Request.SuggestRequest;
 import com.newtv.example.Request.TestGetRequest;
+import com.newtv.example.response.ActiveResponse;
 import com.newtv.example.response.SuggestResponse;
 import com.newtv.example.response.TestResponse;
 import com.newtv.http.ApiHelper;
@@ -52,6 +54,42 @@ public class MainActivity extends AppCompatActivity {
             sendNewTvRequest();
 //            sendRequest();
 
+        });
+
+        findViewById(R.id.post_request).setOnClickListener( v -> {
+            sendPostRequest();
+        });
+    }
+
+
+    private void sendPostRequest() {
+        ActiveRequest activeRequest = new ActiveRequest(MainActivity.this);
+        activeRequest.mac = "009EC8CC24A0";
+        activeRequest.key = "dcf09be0f8993e896ba4de940f1692c3";
+        activeRequest.channelId = "50000138";
+        activeRequest.ts = "1606818459575";
+        activeRequest.token = "2A27CD24E86C400D3027DBB400CA240E";
+
+        ApiHelper.send(activeRequest, new NewTypeReference<ActiveResponse>() {}).subscribe(new Observer<ActiveResponse>() {
+            @Override
+            public void onSubscribe(@NonNull Disposable d) {
+
+            }
+
+            @Override
+            public void onNext(@NonNull ActiveResponse activeResponse) {
+                Log.e("zhangxu", activeResponse.toString());
+            }
+
+            @Override
+            public void onError(@NonNull Throwable e) {
+
+            }
+
+            @Override
+            public void onComplete() {
+
+            }
         });
     }
 
@@ -138,6 +176,7 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    // 测试顺序发送
     private void sendRequest() {
         Log.e("zhangxu", "开始发送");
 

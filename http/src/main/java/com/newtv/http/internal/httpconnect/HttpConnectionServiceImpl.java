@@ -4,8 +4,6 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
-import androidx.annotation.Nullable;
-
 import com.newtv.http.EventListener;
 import com.newtv.http.MethodType;
 import com.newtv.http.config.HttpConfig;
@@ -67,7 +65,7 @@ public class HttpConnectionServiceImpl implements HttpService {
     public void sendRequest(BaseHttpRequest request, HttpListener listener, EventListener eventListener) {
         executor.execute(() -> {
 
-            if (request.getMethodType() == MethodType.GET) {
+            if (request.methodType() == MethodType.GET) {
                 sendGetRequestInternal(request, initGetUrl(request), listener, eventListener);
             } else {
                 sendPostRequestInternal(request, listener, eventListener);
@@ -78,9 +76,9 @@ public class HttpConnectionServiceImpl implements HttpService {
     private String initGetUrl(BaseHttpRequest request) {
 
         StringBuilder data = new StringBuilder();
-        data.append(request.getBaseUrl())
-                .append(request.getSecondUrl()).append("?");
-        Map<String, String> params = request.getParams();
+        data.append(request.baseUrl())
+                .append(request.secondUrl()).append("?");
+        Map<String, String> params = request.params();
         if (params != null) {
             String[] keys = params.keySet().toArray(new String[0]);
             for (int i = 0; i < keys.length; i++) {
@@ -109,7 +107,7 @@ public class HttpConnectionServiceImpl implements HttpService {
         InputStream inputStream = null;
 
 
-        HttpConfig config = request.getHttpConfig();
+        HttpConfig config = request.httpConfig();
         if (config != null) {
             if (config.getHostnameVerifier() != null) {
                 HttpsURLConnection.setDefaultHostnameVerifier(config.getHostnameVerifier());
@@ -127,13 +125,13 @@ public class HttpConnectionServiceImpl implements HttpService {
             URL url = new URL(urlString);
             connection = (HttpURLConnection) url.openConnection();
 
-            if (connectionMap.containsKey(request.getTag())) {
-                List<HttpURLConnection> httpURLConnections = connectionMap.get(request.getTag());
+            if (connectionMap.containsKey(request.tag())) {
+                List<HttpURLConnection> httpURLConnections = connectionMap.get(request.tag());
                 httpURLConnections.add(connection);
             } else {
                 List<HttpURLConnection> httpURLConnections = new ArrayList<>();
                 httpURLConnections.add(connection);
-                connectionMap.put(request.getTag(), httpURLConnections);
+                connectionMap.put(request.tag(), httpURLConnections);
             }
 
             connection.setDoInput(true);
@@ -193,8 +191,8 @@ public class HttpConnectionServiceImpl implements HttpService {
             Log.e(TAG, "HttpConnectionServiceImpl ----> send GET FINAL");
             if (connection != null) {
                 connection.disconnect();
-                if (connectionMap.get(request.getTag()) != null) {
-                    connectionMap.get(request.getTag()).remove(connection);
+                if (connectionMap.get(request.tag()) != null) {
+                    connectionMap.get(request.tag()).remove(connection);
                 }
             }
             if (inputStream != null) {
@@ -217,7 +215,7 @@ public class HttpConnectionServiceImpl implements HttpService {
 
         OutputStream outputStream = null;
 
-        HttpConfig config = request.getHttpConfig();
+        HttpConfig config = request.httpConfig();
         if (config != null) {
             if (config.getHostnameVerifier() != null) {
                 HttpsURLConnection.setDefaultHostnameVerifier(config.getHostnameVerifier());
@@ -232,16 +230,16 @@ public class HttpConnectionServiceImpl implements HttpService {
 
         try {
 
-            URL url = new URL(request.getBaseUrl() + request.getSecondUrl());
+            URL url = new URL(request.baseUrl() + request.secondUrl());
             connection = (HttpURLConnection) url.openConnection();
 
-            if (connectionMap.containsKey(request.getTag())) {
-                List<HttpURLConnection> httpURLConnections = connectionMap.get(request.getTag());
+            if (connectionMap.containsKey(request.tag())) {
+                List<HttpURLConnection> httpURLConnections = connectionMap.get(request.tag());
                 httpURLConnections.add(connection);
             } else {
                 List<HttpURLConnection> httpURLConnections = new ArrayList<>();
                 httpURLConnections.add(connection);
-                connectionMap.put(request.getTag(), httpURLConnections);
+                connectionMap.put(request.tag(), httpURLConnections);
             }
 
             connection.setDoInput(true);
@@ -255,7 +253,7 @@ public class HttpConnectionServiceImpl implements HttpService {
 
             outputStream = connection.getOutputStream();
             StringBuilder data = new StringBuilder();
-            Map<String, String> params = request.getParams();
+            Map<String, String> params = request.params();
             if (params != null) {
                 String[] keys = params.keySet().toArray(new String[0]);
                 for (int i = 0; i < keys.length; i++) {
@@ -320,8 +318,8 @@ public class HttpConnectionServiceImpl implements HttpService {
         } finally {
             if (connection != null) {
                 connection.disconnect();
-                if (connectionMap.get(request.getTag()) != null) {
-                    connectionMap.get(request.getTag()).remove(connection);
+                if (connectionMap.get(request.tag()) != null) {
+                    connectionMap.get(request.tag()).remove(connection);
                 }
             }
             if (outputStream != null) {
@@ -344,7 +342,7 @@ public class HttpConnectionServiceImpl implements HttpService {
 
 
     private void httpConfig(BaseHttpRequest request, HttpURLConnection connection) {
-        HttpConfig config = request.getHttpConfig();
+        HttpConfig config = request.httpConfig();
         if (config != null) {
             if (config.getConnectTimeout() > 0) {
                 if (config.getConnectTimeoutTimeUnit() == TimeUnit.SECONDS) {
@@ -376,7 +374,7 @@ public class HttpConnectionServiceImpl implements HttpService {
 
     private void httpHeaders(BaseHttpRequest request, HttpURLConnection connection) {
         // 设置请求头
-        Map<String, String> headers = request.getHeaders();
+        Map<String, String> headers = request.headers();
         if (headers != null) {
             Set<String> keys = headers.keySet();
 

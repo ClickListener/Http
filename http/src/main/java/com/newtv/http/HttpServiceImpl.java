@@ -4,9 +4,7 @@ import android.util.Log;
 
 import androidx.annotation.Nullable;
 
-import com.alibaba.fastjson.JSON;
 import com.newtv.http.call.Call;
-import com.newtv.http.factory.HttpServiceFactory;
 import com.newtv.http.internal.HttpListener;
 import com.newtv.http.internal.HttpService;
 import com.newtv.http.request.BaseHttpRequest;
@@ -44,13 +42,13 @@ public class HttpServiceImpl implements HttpService {
     @Override
     public void sendRequest(BaseHttpRequest request, HttpListener listener, @Nullable EventListener eventListener) {
         Call call;
-        List<Call> calls = callMap.get(request.getTag());
+        List<Call> calls = callMap.get(request.tag());
         if (calls == null) {
             calls = new ArrayList<>();
-            callMap.put(request.getTag(), calls);
+            callMap.put(request.tag(), calls);
         }
         NewHttpClient client = new NewHttpClient.Builder()
-                .addInterceptors(request.getHttpConfig().getInterceptors())
+                .addInterceptors(request.httpConfig().getInterceptors())
                 .eventListener(eventListener)
                 .build();
         call = client.newCall(request);

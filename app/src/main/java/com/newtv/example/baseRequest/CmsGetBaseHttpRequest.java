@@ -23,14 +23,14 @@ public abstract class CmsGetBaseHttpRequest extends GetBaseHttpRequest {
     }
 
     @Override
-    public Map<String, String> getHeaders() {
+    public Map<String, String> headers() {
         Map<String, String> header = new HashMap<>();
         header.put("host_type", "SEARCH");
         return header;
     }
 
     @Override
-    public String getBaseUrl() {
+    public String baseUrl() {
         return "http://118.89.223.215/";
     }
 
@@ -41,7 +41,7 @@ public abstract class CmsGetBaseHttpRequest extends GetBaseHttpRequest {
 
 
     @Override
-    public HttpConfig getHttpConfig() {
+    public HttpConfig httpConfig() {
         HttpConfig.Builder builder = new HttpConfig.Builder();
         RetryParam retryParam = new RetryParam(3, 1000);
         return builder.readTimeout(3, TimeUnit.SECONDS)

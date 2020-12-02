@@ -16,7 +16,7 @@ import java.util.Map;
 public abstract class BaseHttpRequest implements Serializable {
 
 
-    private Context mContext;
+    private final Context mContext;
 
 
     public BaseHttpRequest(Context context) {
@@ -27,7 +27,7 @@ public abstract class BaseHttpRequest implements Serializable {
      * 获得当前Request的标识
      * @return context
      */
-    public Object getTag() {
+    public Object tag() {
         return mContext;
     }
 
@@ -35,26 +35,26 @@ public abstract class BaseHttpRequest implements Serializable {
      * 服务器地址
      * @return 正式服务器或测试服务器
      */
-    public abstract String getBaseUrl();
+    public abstract String baseUrl();
 
     /**
      * 请求URL
      * @return
      */
-    public abstract String getSecondUrl();
+    public abstract String secondUrl();
 
     /**
      * 获得头信息
      * @return
      */
-    public abstract Map<String, String> getHeaders();
+    public abstract Map<String, String> headers();
 
     public abstract String toJson();
 
-    public abstract HttpConfig getHttpConfig();
+    public abstract HttpConfig httpConfig();
 
-    public abstract Map<String, String> getParams();
+    public abstract Map<String, String> params();
 
-    public abstract @MethodType.Method int getMethodType();
+    public abstract @MethodType.Method int methodType();
 
 }

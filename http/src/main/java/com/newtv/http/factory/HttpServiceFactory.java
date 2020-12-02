@@ -11,7 +11,7 @@ import com.newtv.http.internal.retrofit.RetrofitHttpServiceImpl;
  */
 public class HttpServiceFactory {
 
-    public static int TYPE = 1;
+    public static int TYPE = 0;
 
     public static HttpService createHttpService() {
         if (TYPE == 0) {

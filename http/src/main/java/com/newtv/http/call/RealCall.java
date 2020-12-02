@@ -1,5 +1,7 @@
 package com.newtv.http.call;
 
+import android.util.Log;
+
 import com.newtv.http.NewHttpClient;
 import com.newtv.http.chain.RealInterceptorChain;
 import com.newtv.http.config.RetryParam;
@@ -46,8 +48,8 @@ public class RealCall implements Call{
         interceptors.addAll(client.interceptors());
         interceptors.add(retryAndFollowUpInterceptor);
 
-        if (request != null && request.getHttpConfig() != null && request.getHttpConfig().getRetryParam() != null) {
-            RetryParam retryParam = request.getHttpConfig().getRetryParam();
+        if (request != null && request.httpConfig() != null && request.httpConfig().getRetryParam() != null) {
+            RetryParam retryParam = request.httpConfig().getRetryParam();
             if (retryParam.getMaxRetryCount() > 0) {
                 if (retryParam.getRetryDelay() > 0) {
                     interceptors.add(new RetryInterceptor(retryParam.getMaxRetryCount(), retryParam.getRetryDelay()));
@@ -63,6 +65,7 @@ public class RealCall implements Call{
         try {
             chain.proceed(request, listener, client.eventListener());
         } catch (IOException e) {
+            Log.e("zhangxu", "e = " + e.toString());
             e.printStackTrace();
         }
 

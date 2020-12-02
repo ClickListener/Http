@@ -14,7 +14,7 @@ public abstract class PostBaseHttpRequest extends BaseHttpRequest {
     }
 
     @Override
-    public int getMethodType() {
+    public int methodType() {
         return MethodType.POST;
     }
 }

@@ -31,6 +31,6 @@ public class RetryAndFollowUpInterceptor implements NewInterceptor {
     public void cancel(BaseHttpRequest request) {
         this.canceled = true;
         HttpService httpService = HttpServiceFactory.createHttpService();
-        if (httpService != null) httpService.cancelRequest(request.getTag());
+        if (httpService != null) httpService.cancelRequest(request.tag());
     }
 }

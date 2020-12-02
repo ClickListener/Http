@@ -91,7 +91,7 @@ public class OkHttpServiceImpl implements HttpService {
             }
         });
 
-        HttpConfig config = request.getHttpConfig();
+        HttpConfig config = request.httpConfig();
         if (config != null) {
             if (config.getHostnameVerifier() != null) {
                 builder.hostnameVerifier(config.getHostnameVerifier());
@@ -123,16 +123,16 @@ public class OkHttpServiceImpl implements HttpService {
     @Override
     public void sendRequest(BaseHttpRequest request, HttpListener listener, EventListener eventListener) {
         Call call;
-        List<Call> calls = callMap.get(request.getTag());
+        List<Call> calls = callMap.get(request.tag());
 
         Request okHttpRequest;
 
-        if (request.getMethodType() == MethodType.GET) {
+        if (request.methodType() == MethodType.GET) {
 
             // 组装参数
-            HttpUrl.Builder builder = HttpUrl.parse(request.getBaseUrl() + request.getSecondUrl())
+            HttpUrl.Builder builder = HttpUrl.parse(request.baseUrl() + request.secondUrl())
                     .newBuilder();
-            Map<String, String> params = request.getParams();
+            Map<String, String> params = request.params();
             if (params != null) {
                 Set<String> keys = params.keySet();
                 for (String key : keys) {
@@ -150,7 +150,7 @@ public class OkHttpServiceImpl implements HttpService {
             okHttpRequest = new Request.Builder()
                     .headers(convertHeader(request))
                     .post(body)
-                    .url(request.getBaseUrl() + request.getSecondUrl())
+                    .url(request.baseUrl() + request.secondUrl())
                     .build();
         }
 
@@ -159,7 +159,7 @@ public class OkHttpServiceImpl implements HttpService {
         if (calls == null) {
             calls = new ArrayList<>();
             calls.add(call);
-            callMap.put(request.getTag(), calls);
+            callMap.put(request.tag(), calls);
         } else {
             calls.add(call);
         }
@@ -168,13 +168,13 @@ public class OkHttpServiceImpl implements HttpService {
             @Override
             public void onFailure(@Nullable Call call, @Nullable IOException e) {
                 handleErrorCallback(listener, e);
-                callMap.remove(request.getTag());
+                callMap.remove(request.tag());
             }
 
             @Override
             public void onResponse(@Nullable Call call, @Nullable Response response) throws IOException {
 
-                callMap.remove(request.getTag());
+                callMap.remove(request.tag());
 
                 if (response != null && response.body() != null) {
                     if (response.code() == 200) {
@@ -189,7 +189,7 @@ public class OkHttpServiceImpl implements HttpService {
 
 
     private Headers convertHeader(BaseHttpRequest request) {
-        Map<String, String> headers = request.getHeaders();
+        Map<String, String> headers = request.headers();
         if (headers != null) {
             Headers.Builder builder = new Headers.Builder();
             Set<String> keySet = headers.keySet();

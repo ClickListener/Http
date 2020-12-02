@@ -17,7 +17,7 @@ public abstract class GetBaseHttpRequest extends BaseHttpRequest {
 
 
     @Override
-    public int getMethodType() {
+    public int methodType() {
         return MethodType.GET;
     }
 }

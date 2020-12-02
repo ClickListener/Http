@@ -34,12 +34,12 @@ public class SuggestRequest extends CmsGetBaseHttpRequest {
 
 
     @Override
-    public String getSecondUrl() {
+    public String secondUrl() {
         return "api/v31/dcf09be0f8993e896ba4de940f1692c3/50000138/search.json";
     }
 
     @Override
-    public Map<String, String> getParams() {
+    public Map<String, String> params() {
 
         Map<String, String> params = new HashMap<>();
         params.put("firstCategoryId", firstCategoryId);

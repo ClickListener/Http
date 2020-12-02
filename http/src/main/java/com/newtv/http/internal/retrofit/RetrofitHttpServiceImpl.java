@@ -3,7 +3,6 @@ package com.newtv.http.internal.retrofit;
 
 
 import com.newtv.http.EventListener;
-import com.newtv.http.TrustAllCerts;
 import com.newtv.http.internal.HttpListener;
 import com.newtv.http.internal.HttpService;
 import com.newtv.http.MethodType;
@@ -71,7 +70,7 @@ public class RetrofitHttpServiceImpl implements HttpService {
 
     private Retrofit getDefaultRetrofit(BaseHttpRequest request, EventListener eventListener) {
 
-        String baseUrl = request.getBaseUrl();
+        String baseUrl = request.baseUrl();
         Retrofit retrofit = retrofitCache.get(baseUrl);
         if (retrofit == null) {
 
@@ -92,7 +91,7 @@ public class RetrofitHttpServiceImpl implements HttpService {
 
     private OkHttpClient getOkHttpClient(BaseHttpRequest request, EventListener eventListener) {
 
-        HttpConfig config = request.getHttpConfig();
+        HttpConfig config = request.httpConfig();
 
         OkHttpClient.Builder builder = new OkHttpClient.Builder();
 
@@ -143,12 +142,12 @@ public class RetrofitHttpServiceImpl implements HttpService {
         Retrofit retrofit = getDefaultRetrofit(request, eventListener);
         ApiService apiService = retrofit.create(ApiService.class);
         Observable<ResponseBody> observable;
-        if (request.getMethodType() == MethodType.GET) {
-            observable = apiService.getWithField(request.getHeaders(), request.getSecondUrl(), request.getParams());
+        if (request.methodType() == MethodType.GET) {
+            observable = apiService.getWithField(request.headers(), request.secondUrl(), request.params());
         } else {
             MediaType type = MediaType.parse("application/json; charset=utf-8");
             RequestBody body = RequestBody.create(type, request.toJson());
-            observable = apiService.postWithBody(request.getHeaders(), request.getSecondUrl(), body);
+            observable = apiService.postWithBody(request.headers(), request.secondUrl(), body);
         }
         observable.subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -159,7 +158,7 @@ public class RetrofitHttpServiceImpl implements HttpService {
                     @Override
                     public void onSubscribe(Disposable d) {
 
-                        Object tag = request.getTag();
+                        Object tag = request.tag();
                         if (tag == null) {
                             return;
                         }
@@ -199,7 +198,7 @@ public class RetrofitHttpServiceImpl implements HttpService {
     }
 
     private void releaseRequest(BaseHttpRequest request, Disposable disposable) {
-        Object tag = request.getTag();
+        Object tag = request.tag();
         if (tag != null) {
             CompositeDisposable compositeDisposable = compositeDisposableMapping.get(tag);
             if (compositeDisposable != null) {

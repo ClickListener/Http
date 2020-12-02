@@ -24,17 +24,17 @@ public class TestGetRequest extends CmsGetBaseHttpRequest {
     }
 
     @Override
-    public String getBaseUrl() {
+    public String baseUrl() {
         return "http://fy.iciba.com/";
     }
 
     @Override
-    public String getSecondUrl() {
+    public String secondUrl() {
         return "ajax.php";
     }
 
     @Override
-    public Map<String, String> getParams() {
+    public Map<String, String> params() {
         Map<String, String> params = new HashMap<>();
         params.put("a", a);
         params.put("f", f);
