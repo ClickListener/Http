@@ -25,61 +25,61 @@ public class HttpConfig {
     /**
      * 连接超时时间
      */
-    private int connectTimeout;
+    private final int connectTimeout;
 
     /**
      * 连接超时时间 单位
      */
-    private TimeUnit connectTimeoutTimeUnit;
+    private final TimeUnit connectTimeoutTimeUnit;
 
     /**
      * 读超时时间
      */
-    private int readTimeout;
+    private final int readTimeout;
 
 
     /**
      * 读超时时间 单位
      */
-    private TimeUnit readTimeoutTimeUnit;
+    private final TimeUnit readTimeoutTimeUnit;
 
 
     /**
      * 写 超时时间
      */
-    private int writeTimeout;
+    private final int writeTimeout;
 
 
     /**
      * 写 超时时间 单位
      */
-    private TimeUnit writeTimeoutTimeUnit;
+    private final TimeUnit writeTimeoutTimeUnit;
 
 
     /**
      * 拦截器
      */
-    private List<NewInterceptor> interceptors;
+    private final List<NewInterceptor> interceptors;
 
     /**
      * 重试
      */
-    private RetryParam retryParam;
+    private final RetryParam retryParam;
 
     /**
      * SSLSocket
      */
-    private SSLSocketFactory sslSocketFactory;
+    private final SSLSocketFactory sslSocketFactory;
 
     /**
      * X509TrustManager
      */
-    private X509TrustManager x509TrustManager;
+    private final X509TrustManager x509TrustManager;
 
     /**
-     *
+     * 域名
      */
-    private HostnameVerifier hostnameVerifier;
+    private final HostnameVerifier hostnameVerifier;
 
     public HttpConfig(Builder builder) {
 
@@ -181,7 +181,7 @@ public class HttpConfig {
         /**
          * 拦截器
          */
-        private List<NewInterceptor> interceptors = new ArrayList<>();
+        private final List<NewInterceptor> interceptors = new ArrayList<>();
 
         /**
          * 重试

@@ -19,7 +19,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @author ZhangXu
  * @date 2020/11/17
  */
-public class HttpServiceImpl implements HttpService {
+class HttpServiceImpl implements HttpService {
 
     private static volatile HttpServiceImpl INSTANCE;
 

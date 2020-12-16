@@ -8,7 +8,13 @@ import java.util.concurrent.TimeUnit;
  */
 public class RetryParam {
 
+    /**
+     * 重试次数
+     */
     private final int maxRetryCount;
+    /**
+     * 重试时间间隔
+     */
     private final int retryDelay;
 
 

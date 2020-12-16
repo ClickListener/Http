@@ -27,7 +27,7 @@ public abstract class BaseHttpRequest implements Serializable {
      * 获得当前Request的标识
      * @return context
      */
-    public Object tag() {
+    public final Object tag() {
         return mContext;
     }
 
@@ -49,12 +49,28 @@ public abstract class BaseHttpRequest implements Serializable {
      */
     public abstract Map<String, String> headers();
 
+    /**
+     * 将请求转成JSON
+     * @return
+     */
     public abstract String toJson();
 
+    /**
+     * 网络请求的配置
+     * @return
+     */
     public abstract HttpConfig httpConfig();
 
+    /**
+     * 将请求参数转成MAP
+     * @return
+     */
     public abstract Map<String, String> params();
 
+    /**
+     * 请求方法
+     * @return
+     */
     public abstract @MethodType.Method int methodType();
 
 }
